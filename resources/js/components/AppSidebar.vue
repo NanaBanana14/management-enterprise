@@ -6,22 +6,27 @@ import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import {
     BookOpenText,
+    Boxes,
     Briefcase,
     Building2,
     CalendarCheck,
     CalendarClock,
     Clock3,
+    Contact,
     FileBarChart,
     GraduationCap,
     LayoutGrid,
     Landmark,
+    Package,
     ScrollText,
     ShieldCheck,
     Target,
+    Truck,
     TrendingUp,
     UserSearch,
     Users,
     Wallet,
+    Warehouse,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
@@ -81,6 +86,18 @@ const financeNavItems = computed<NavItem[]>(() =>
     ).filter(canSee),
 );
 
+const erpNavItems = computed<NavItem[]>(() =>
+    (
+        [
+            { title: 'Products', href: '/erp/products', icon: Package, permission: 'product.view' },
+            { title: 'Warehouses', href: '/erp/warehouses', icon: Warehouse, permission: 'warehouse.view' },
+            { title: 'Inventory', href: '/erp/inventory', icon: Boxes, permission: 'inventory.view' },
+            { title: 'Suppliers', href: '/erp/suppliers', icon: Truck, permission: 'supplier.view' },
+            { title: 'Customers', href: '/erp/customers', icon: Contact, permission: 'customer.view' },
+        ] satisfies NavItem[]
+    ).filter(canSee),
+);
+
 const administrationNavItems = computed<NavItem[]>(() =>
     (
         [
@@ -110,6 +127,7 @@ const administrationNavItems = computed<NavItem[]>(() =>
             <NavMain :items="platformNavItems" label="Platform" />
             <NavMain :items="hrisNavItems" label="HRIS" />
             <NavMain :items="financeNavItems" label="Finance" />
+            <NavMain :items="erpNavItems" label="ERP" />
             <NavMain :items="administrationNavItems" label="Administration" />
         </SidebarContent>
 

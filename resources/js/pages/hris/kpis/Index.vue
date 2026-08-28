@@ -30,7 +30,7 @@ interface CategoryRow {
     kpis: KpiRow[];
 }
 
-const props = defineProps<{ categories: CategoryRow[] }>();
+defineProps<{ categories: CategoryRow[] }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },

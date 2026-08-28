@@ -38,3 +38,4 @@ require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
 require __DIR__.'/hris.php';
 require __DIR__.'/finance.php';
+require __DIR__.'/erp.php';

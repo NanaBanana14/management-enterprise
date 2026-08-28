@@ -30,7 +30,7 @@ interface CategoryRow {
     programs: ProgramRow[];
 }
 
-const props = defineProps<{
+defineProps<{
     categories: CategoryRow[];
     hasEmployeeProfile: boolean;
 }>();
