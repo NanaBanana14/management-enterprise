@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
@@ -55,9 +55,11 @@ const submit = () => form.put(route('hris.positions.update', props.position.id))
                     <form class="space-y-5" @submit.prevent="submit">
                         <div class="grid gap-2">
                             <Label for="department_id">Department</Label>
-                            <Select id="department_id" v-model="form.department_id">
-                                <option v-for="department in departments" :key="department.id" :value="department.id">{{ department.name }}</option>
-                            </Select>
+                            <SearchableSelect
+                                v-model="form.department_id"
+                                placeholder="Select a department"
+                                :options="departments.map((d) => ({ value: d.id, label: d.name }))"
+                            />
                             <InputError :message="form.errors.department_id" />
                         </div>
 

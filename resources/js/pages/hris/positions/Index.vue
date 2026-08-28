@@ -5,7 +5,7 @@ import Pagination from '@/components/Pagination.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem, SharedData } from '@/types';
@@ -93,10 +93,15 @@ function destroyPosition() {
                     <Search class="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                     <Input v-model="search" placeholder="Search name or code" class="pl-8" />
                 </div>
-                <Select v-model="departmentId" class="sm:w-56">
-                    <option value="">All departments</option>
-                    <option v-for="department in departments" :key="department.id" :value="String(department.id)">{{ department.name }}</option>
-                </Select>
+                <SearchableSelect
+                    v-model="departmentId"
+                    class="sm:w-56"
+                    placeholder="All departments"
+                    :options="[
+                        { value: '', label: 'All departments' },
+                        ...departments.map((d) => ({ value: String(d.id), label: d.name })),
+                    ]"
+                />
             </div>
 
             <Table>

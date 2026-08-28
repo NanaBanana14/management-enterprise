@@ -31,6 +31,9 @@ class DatabaseSeeder extends Seeder
         $this->call(HrisSeeder::class);
         $this->call(AttendanceSeeder::class);
         $this->call(LeaveTypeSeeder::class);
+        $this->call(KpiSeeder::class);
+        $this->call(RecruitmentSeeder::class);
+        $this->call(TrainingSeeder::class);
 
         foreach (self::DEMO_USERS as $demo) {
             $user = User::factory()

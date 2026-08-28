@@ -4,9 +4,9 @@ import PageHeader from '@/components/PageHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
+import { Input, PasswordInput } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/vue3';
@@ -60,22 +60,23 @@ const submit = () => form.put(route('admin.users.update', props.user.id));
 
                         <div class="grid gap-2">
                             <Label for="role">Role</Label>
-                            <Select id="role" v-model="form.role">
-                                <option value="" disabled>Select a role</option>
-                                <option v-for="r in roles" :key="r" :value="r">{{ r }}</option>
-                            </Select>
+                            <SearchableSelect
+                                v-model="form.role"
+                                placeholder="Select a role"
+                                :options="roles.map((r) => ({ value: r, label: r }))"
+                            />
                             <InputError :message="form.errors.role" />
                         </div>
 
                         <div class="grid gap-2">
                             <Label for="password">New password</Label>
-                            <Input id="password" v-model="form.password" type="password" autocomplete="new-password" placeholder="Leave blank to keep current password" />
+                            <PasswordInput id="password" v-model="form.password" autocomplete="new-password" placeholder="Leave blank to keep current password" />
                             <InputError :message="form.errors.password" />
                         </div>
 
                         <div class="grid gap-2">
                             <Label for="password_confirmation">Confirm new password</Label>
-                            <Input id="password_confirmation" v-model="form.password_confirmation" type="password" autocomplete="new-password" />
+                            <PasswordInput id="password_confirmation" v-model="form.password_confirmation" autocomplete="new-password" />
                         </div>
 
                         <Label class="flex items-center gap-2">

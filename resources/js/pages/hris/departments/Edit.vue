@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
@@ -57,10 +57,11 @@ const submit = () => form.put(route('hris.departments.update', props.department.
 
                         <div class="grid gap-2">
                             <Label for="manager_id">Manager</Label>
-                            <Select id="manager_id" v-model="form.manager_id">
-                                <option value="">No manager assigned</option>
-                                <option v-for="employee in employees" :key="employee.id" :value="employee.id">{{ employee.name }}</option>
-                            </Select>
+                            <SearchableSelect
+                                v-model="form.manager_id"
+                                placeholder="No manager assigned"
+                                :options="[{ value: '', label: 'No manager assigned' }, ...employees.map((e) => ({ value: e.id, label: e.name }))]"
+                            />
                             <InputError :message="form.errors.manager_id" />
                         </div>
 
