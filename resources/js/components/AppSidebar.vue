@@ -23,6 +23,7 @@ import {
     ReceiptText,
     ScrollText,
     ShieldCheck,
+    ShoppingCart,
     Target,
     Truck,
     TrendingUp,
@@ -100,6 +101,8 @@ const erpNavItems = computed<NavItem[]>(() =>
             { title: 'Inventory', href: '/erp/inventory', icon: Boxes, permission: 'inventory.view' },
             { title: 'Suppliers', href: '/erp/suppliers', icon: Truck, permission: 'supplier.view' },
             { title: 'Customers', href: '/erp/customers', icon: Contact, permission: 'customer.view' },
+            { title: 'Purchase Orders', href: '/erp/purchase-orders', icon: ShoppingCart, permission: 'purchase.view' },
+            { title: 'Sales Orders', href: '/erp/sales-orders', icon: ReceiptText, permission: 'sales.view' },
         ] satisfies NavItem[]
     ).filter(canSee),
 );
