@@ -4,7 +4,25 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { Briefcase, Building2, CalendarCheck, CalendarClock, Clock3, GraduationCap, LayoutGrid, ScrollText, ShieldCheck, Target, TrendingUp, UserSearch, Users, Wallet } from 'lucide-vue-next';
+import {
+    BookOpenText,
+    Briefcase,
+    Building2,
+    CalendarCheck,
+    CalendarClock,
+    Clock3,
+    FileBarChart,
+    GraduationCap,
+    LayoutGrid,
+    Landmark,
+    ScrollText,
+    ShieldCheck,
+    Target,
+    TrendingUp,
+    UserSearch,
+    Users,
+    Wallet,
+} from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -53,6 +71,16 @@ const hrisNavItems = computed<NavItem[]>(() =>
     ).filter(canSee),
 );
 
+const financeNavItems = computed<NavItem[]>(() =>
+    (
+        [
+            { title: 'Chart of Accounts', href: '/finance/accounts', icon: Landmark, permission: 'account.view' },
+            { title: 'Journal Entries', href: '/finance/journal', icon: BookOpenText, permission: 'journal.view' },
+            { title: 'Reports', href: '/finance/reports', icon: FileBarChart, permission: 'report.view' },
+        ] satisfies NavItem[]
+    ).filter(canSee),
+);
+
 const administrationNavItems = computed<NavItem[]>(() =>
     (
         [
@@ -81,6 +109,7 @@ const administrationNavItems = computed<NavItem[]>(() =>
         <SidebarContent>
             <NavMain :items="platformNavItems" label="Platform" />
             <NavMain :items="hrisNavItems" label="HRIS" />
+            <NavMain :items="financeNavItems" label="Finance" />
             <NavMain :items="administrationNavItems" label="Administration" />
         </SidebarContent>
 
