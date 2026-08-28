@@ -31,8 +31,9 @@ defineProps<{
                     preserve-scroll
                     class="rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-muted"
                     :class="link.active ? 'bg-primary text-primary-foreground hover:bg-primary' : 'text-foreground'"
-                    v-html="link.label"
-                />
+                >
+                    <span v-html="link.label" />
+                </Link>
             </template>
         </nav>
     </div>
