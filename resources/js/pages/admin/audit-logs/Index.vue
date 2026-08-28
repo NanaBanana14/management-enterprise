@@ -2,7 +2,7 @@
 import PageHeader from '@/components/PageHeader.vue';
 import Pagination from '@/components/Pagination.vue';
 import { Badge } from '@/components/ui/badge';
-import { Select } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
@@ -69,14 +69,18 @@ const actionVariant: Record<string, 'success' | 'warning' | 'destructive'> = {
             <PageHeader title="Audit Log" description="Every create, update, and delete tracked across the system." />
 
             <div class="flex flex-col gap-3 sm:flex-row">
-                <Select v-model="userId" class="sm:w-56">
-                    <option value="">All users</option>
-                    <option v-for="user in users" :key="user.id" :value="String(user.id)">{{ user.name }}</option>
-                </Select>
-                <Select v-model="action" class="sm:w-40">
-                    <option value="">All actions</option>
-                    <option v-for="a in actions" :key="a" :value="a">{{ a }}</option>
-                </Select>
+                <SearchableSelect
+                    v-model="userId"
+                    class="sm:w-56"
+                    placeholder="All users"
+                    :options="[{ value: '', label: 'All users' }, ...users.map((u) => ({ value: String(u.id), label: u.name }))]"
+                />
+                <SearchableSelect
+                    v-model="action"
+                    class="sm:w-40"
+                    placeholder="All actions"
+                    :options="[{ value: '', label: 'All actions' }, ...actions.map((a) => ({ value: a, label: a }))]"
+                />
             </div>
 
             <Table>

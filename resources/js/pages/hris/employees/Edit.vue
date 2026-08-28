@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
@@ -155,42 +155,42 @@ const submit = () => form.post(route('hris.employees.update', props.employee.id)
                         <div class="grid grid-cols-2 gap-4">
                             <div class="grid gap-2">
                                 <Label for="department_id">Department</Label>
-                                <Select id="department_id" v-model="form.department_id" @update:model-value="form.position_id = ''">
-                                    <option v-for="d in departments" :key="d.id" :value="d.id">{{ d.name }}</option>
-                                </Select>
+                                <SearchableSelect
+                                    v-model="form.department_id"
+                                    :options="departments.map((d) => ({ value: d.id, label: d.name }))"
+                                    @update:model-value="form.position_id = ''"
+                                />
                                 <InputError :message="form.errors.department_id" />
                             </div>
                             <div class="grid gap-2">
                                 <Label for="position_id">Position</Label>
-                                <Select id="position_id" v-model="form.position_id">
-                                    <option v-for="p in filteredPositions" :key="p.id" :value="p.id">{{ p.name }}</option>
-                                </Select>
+                                <SearchableSelect
+                                    v-model="form.position_id"
+                                    :options="filteredPositions.map((p) => ({ value: p.id, label: p.name }))"
+                                />
                                 <InputError :message="form.errors.position_id" />
                             </div>
                         </div>
 
                         <div class="grid gap-2">
                             <Label for="manager_id">Manager</Label>
-                            <Select id="manager_id" v-model="form.manager_id">
-                                <option value="">No manager</option>
-                                <option v-for="m in managers" :key="m.id" :value="m.id">{{ m.name }}</option>
-                            </Select>
+                            <SearchableSelect
+                                v-model="form.manager_id"
+                                placeholder="No manager"
+                                :options="[{ value: '', label: 'No manager' }, ...managers.map((m) => ({ value: m.id, label: m.name }))]"
+                            />
                             <InputError :message="form.errors.manager_id" />
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
                             <div class="grid gap-2">
                                 <Label for="employment_type">Employment type</Label>
-                                <Select id="employment_type" v-model="form.employment_type">
-                                    <option v-for="t in employmentTypes" :key="t.value" :value="t.value">{{ t.label }}</option>
-                                </Select>
+                                <SearchableSelect v-model="form.employment_type" :options="employmentTypes" />
                                 <InputError :message="form.errors.employment_type" />
                             </div>
                             <div class="grid gap-2">
                                 <Label for="employment_status">Employment status</Label>
-                                <Select id="employment_status" v-model="form.employment_status">
-                                    <option v-for="s in employmentStatuses" :key="s.value" :value="s.value">{{ s.label }}</option>
-                                </Select>
+                                <SearchableSelect v-model="form.employment_status" :options="employmentStatuses" />
                                 <InputError :message="form.errors.employment_status" />
                             </div>
                         </div>

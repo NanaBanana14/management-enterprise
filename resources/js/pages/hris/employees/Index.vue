@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem, SharedData } from '@/types';
@@ -107,14 +107,21 @@ function initials(name: string): string {
                     <Search class="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                     <Input v-model="search" placeholder="Search name, email, or ID" class="pl-8" />
                 </div>
-                <Select v-model="departmentId" class="sm:w-56">
-                    <option value="">All departments</option>
-                    <option v-for="department in departments" :key="department.id" :value="String(department.id)">{{ department.name }}</option>
-                </Select>
-                <Select v-model="status" class="sm:w-44">
-                    <option value="">All statuses</option>
-                    <option v-for="s in statuses" :key="s.value" :value="s.value">{{ s.label }}</option>
-                </Select>
+                <SearchableSelect
+                    v-model="departmentId"
+                    class="sm:w-56"
+                    placeholder="All departments"
+                    :options="[
+                        { value: '', label: 'All departments' },
+                        ...departments.map((d) => ({ value: String(d.id), label: d.name })),
+                    ]"
+                />
+                <SearchableSelect
+                    v-model="status"
+                    class="sm:w-44"
+                    placeholder="All statuses"
+                    :options="[{ value: '', label: 'All statuses' }, ...statuses.map((s) => ({ value: s.value, label: s.label }))]"
+                />
                 <Label class="flex items-center gap-2 whitespace-nowrap text-sm">
                     <Checkbox v-model:checked="archived" />
                     Archived only
