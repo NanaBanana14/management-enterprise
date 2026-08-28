@@ -2,12 +2,17 @@
 
 namespace Database\Seeders;
 
+use App\Models\Account;
 use App\Models\Customer;
+use App\Models\Invoice;
+use App\Models\Payable;
 use App\Models\Product;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\InventoryService;
+use App\Services\InvoiceService;
+use App\Services\PayableService;
 use Illuminate\Database\Seeder;
 
 class ErpSeeder extends Seeder
@@ -68,6 +73,24 @@ class ErpSeeder extends Seeder
             }
 
             $inventory->adjust($product, $mainWarehouse, 'in', 50, 'Initial stock', $admin);
+        }
+
+        if (! Invoice::exists()) {
+            $customer = Customer::first();
+            $revenue = Account::where('code', '4100')->first();
+
+            if ($customer && $revenue) {
+                app(InvoiceService::class)->create($customer, $revenue, 15_000_000, now()->subDays(5)->toDateString(), now()->addDays(25)->toDateString(), 'Sales invoice', $admin);
+            }
+        }
+
+        if (! Payable::exists()) {
+            $supplier = Supplier::first();
+            $expense = Account::where('code', '5300')->first();
+
+            if ($supplier && $expense) {
+                app(PayableService::class)->create($supplier, $expense, 6_500_000, now()->subDays(3)->toDateString(), now()->addDays(27)->toDateString(), 'Office furniture purchase', $admin);
+            }
         }
     }
 }

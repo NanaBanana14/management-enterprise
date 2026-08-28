@@ -14,10 +14,13 @@ import {
     Clock3,
     Contact,
     FileBarChart,
+    FileText,
     GraduationCap,
     LayoutGrid,
     Landmark,
     Package,
+    PiggyBank,
+    ReceiptText,
     ScrollText,
     ShieldCheck,
     Target,
@@ -81,6 +84,9 @@ const financeNavItems = computed<NavItem[]>(() =>
         [
             { title: 'Chart of Accounts', href: '/finance/accounts', icon: Landmark, permission: 'account.view' },
             { title: 'Journal Entries', href: '/finance/journal', icon: BookOpenText, permission: 'journal.view' },
+            { title: 'Cash & Bank', href: '/finance/cashbank', icon: PiggyBank, permission: 'cashbank.view' },
+            { title: 'Invoices (AR)', href: '/finance/invoices', icon: ReceiptText, permission: 'invoice.view' },
+            { title: 'Payables (AP)', href: '/finance/payables', icon: FileText, permission: 'payable.view' },
             { title: 'Reports', href: '/finance/reports', icon: FileBarChart, permission: 'report.view' },
         ] satisfies NavItem[]
     ).filter(canSee),

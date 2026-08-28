@@ -33,6 +33,8 @@ class ChartOfAccountsSeeder extends Seeder
             Account::query()->updateOrCreate(['code' => $code], ['name' => $name, 'type' => $type]);
         }
 
+        Account::whereIn('code', ['1100', '1200'])->update(['is_cash_bank' => true]);
+
         $admin = User::where('email', 'admin@nexa.test')->first();
         $cash = Account::where('code', '1100')->first();
         $capital = Account::where('code', '3100')->first();
