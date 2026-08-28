@@ -3,6 +3,8 @@
 use App\Http\Controllers\Erp\CustomerController;
 use App\Http\Controllers\Erp\InventoryController;
 use App\Http\Controllers\Erp\ProductController;
+use App\Http\Controllers\Erp\PurchaseOrderController;
+use App\Http\Controllers\Erp\SalesOrderController;
 use App\Http\Controllers\Erp\SupplierController;
 use App\Http\Controllers\Erp\WarehouseController;
 use Illuminate\Support\Facades\Route;
@@ -36,5 +38,17 @@ Route::prefix('erp')->name('erp.')->middleware(['auth', 'verified'])->group(func
         Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
         Route::post('customers', [CustomerController::class, 'store'])->name('customers.store')->middleware('permission:customer.manage');
         Route::put('customers/{customer}', [CustomerController::class, 'update'])->name('customers.update')->middleware('permission:customer.manage');
+    });
+
+    Route::middleware('permission:purchase.view')->group(function () {
+        Route::get('purchase-orders', [PurchaseOrderController::class, 'index'])->name('purchase-orders.index');
+        Route::post('purchase-orders', [PurchaseOrderController::class, 'store'])->name('purchase-orders.store')->middleware('permission:purchase.create');
+        Route::post('purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'receive'])->name('purchase-orders.receive')->middleware('permission:purchase.approve');
+    });
+
+    Route::middleware('permission:sales.view')->group(function () {
+        Route::get('sales-orders', [SalesOrderController::class, 'index'])->name('sales-orders.index');
+        Route::post('sales-orders', [SalesOrderController::class, 'store'])->name('sales-orders.store')->middleware('permission:sales.create');
+        Route::post('sales-orders/{salesOrder}/fulfill', [SalesOrderController::class, 'fulfill'])->name('sales-orders.fulfill')->middleware('permission:sales.approve');
     });
 });
