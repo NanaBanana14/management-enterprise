@@ -12,11 +12,11 @@ class Account extends Model
 {
     use Auditable, HasFactory;
 
-    protected $fillable = ['code', 'name', 'type', 'parent_id', 'is_active'];
+    protected $fillable = ['code', 'name', 'type', 'parent_id', 'is_active', 'is_cash_bank'];
 
     protected function casts(): array
     {
-        return ['is_active' => 'boolean'];
+        return ['is_active' => 'boolean', 'is_cash_bank' => 'boolean'];
     }
 
     public function parent(): BelongsTo

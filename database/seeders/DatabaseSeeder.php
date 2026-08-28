@@ -59,5 +59,6 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->call(ChartOfAccountsSeeder::class);
+        $this->call(ErpSeeder::class);
     }
 }
