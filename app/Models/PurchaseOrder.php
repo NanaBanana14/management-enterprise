@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PurchaseOrder extends Model
 {
-    protected $fillable = ['number', 'supplier_id', 'warehouse_id', 'date', 'status', 'notes', 'created_by'];
+    protected $fillable = ['number', 'supplier_id', 'warehouse_id', 'date', 'status', 'notes', 'created_by', 'payable_id'];
 
     protected $casts = ['date' => 'date'];
 
@@ -25,5 +25,10 @@ class PurchaseOrder extends Model
     public function lines(): HasMany
     {
         return $this->hasMany(PurchaseOrderLine::class);
+    }
+
+    public function payable(): BelongsTo
+    {
+        return $this->belongsTo(Payable::class);
     }
 }

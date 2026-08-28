@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Account;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\SalesOrder;
@@ -12,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 
 class SalesOrderService
 {
-    public function __construct(private InventoryService $inventory) {}
+    public function __construct(private InventoryService $inventory, private InvoiceService $invoices) {}
 
     /**
      * @param  array<int, array{product_id: int, quantity: float, unit_price: float}>  $lines
@@ -66,7 +67,20 @@ class SalesOrderService
                 );
             }
 
-            $order->update(['status' => 'fulfilled']);
+            $revenueAccount = Account::where('type', 'revenue')->orderBy('code')->firstOrFail();
+            $total = (float) $order->lines->sum(fn ($line) => $line->quantity * $line->unit_price);
+
+            $invoice = $this->invoices->create(
+                $order->customer,
+                $revenueAccount,
+                $total,
+                now()->toDateString(),
+                now()->addDays(30)->toDateString(),
+                "Invoice for sales order {$order->number}",
+                $user,
+            );
+
+            $order->update(['status' => 'fulfilled', 'invoice_id' => $invoice->id]);
 
             return $order;
         });

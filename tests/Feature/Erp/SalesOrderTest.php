@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Erp;
 
+use App\Models\Account;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\User;
@@ -16,8 +17,10 @@ class SalesOrderTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_fulfilling_a_sales_order_decreases_stock()
+    public function test_fulfilling_a_sales_order_decreases_stock_and_creates_an_invoice()
     {
+        Account::create(['code' => '1300', 'name' => 'Accounts Receivable', 'type' => 'asset']);
+        Account::create(['code' => '4100', 'name' => 'Sales Revenue', 'type' => 'revenue']);
         $customer = Customer::create(['name' => 'Test Customer']);
         $warehouse = Warehouse::create(['code' => 'WH-S1', 'name' => 'Test Warehouse']);
         $product = Product::create(['sku' => 'SKU-S1', 'name' => 'Test Product', 'unit' => 'pcs', 'price' => 1000]);
@@ -34,6 +37,8 @@ class SalesOrderTest extends TestCase
 
         $this->assertSame('fulfilled', $order->fresh()->status);
         $this->assertSame(15.0, $product->fresh()->totalStock());
+        $this->assertNotNull($order->fresh()->invoice_id);
+        $this->assertSame(10_000.0, (float) $order->fresh()->invoice->amount);
     }
 
     public function test_fulfilling_beyond_available_stock_is_rejected()
