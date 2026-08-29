@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -47,6 +47,9 @@ const form = useForm({
 });
 const filteredPositions = computed(() => props.positions.filter((p) => Number(p.department_id) === Number(form.department_id)));
 const submit = () => form.post(route('hris.recruitment.vacancies.store'), { onSuccess: () => (showDialog.value = false) });
+
+const departmentOptions = computed(() => props.departments.map((d) => ({ value: d.id, label: d.name })));
+const positionOptions = computed(() => filteredPositions.value.map((p) => ({ value: p.id, label: p.name })));
 </script>
 
 <template>
@@ -107,18 +110,17 @@ const submit = () => form.post(route('hris.recruitment.vacancies.store'), { onSu
                     <div class="grid grid-cols-2 gap-4">
                         <div class="grid gap-2">
                             <Label for="department_id">Department</Label>
-                            <Select id="department_id" v-model="form.department_id" @update:model-value="form.position_id = ''">
-                                <option value="" disabled>Select</option>
-                                <option v-for="d in departments" :key="d.id" :value="d.id">{{ d.name }}</option>
-                            </Select>
+                            <SearchableSelect
+                                v-model="form.department_id"
+                                placeholder="Select"
+                                :options="departmentOptions"
+                                @update:model-value="form.position_id = ''"
+                            />
                             <InputError :message="form.errors.department_id" />
                         </div>
                         <div class="grid gap-2">
                             <Label for="position_id">Position</Label>
-                            <Select id="position_id" v-model="form.position_id" :disabled="!form.department_id">
-                                <option value="" disabled>Select</option>
-                                <option v-for="p in filteredPositions" :key="p.id" :value="p.id">{{ p.name }}</option>
-                            </Select>
+                            <SearchableSelect v-model="form.position_id" placeholder="Select" :disabled="!form.department_id" :options="positionOptions" />
                             <InputError :message="form.errors.position_id" />
                         </div>
                     </div>

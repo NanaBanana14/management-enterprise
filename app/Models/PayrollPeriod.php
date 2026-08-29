@@ -20,6 +20,7 @@ class PayrollPeriod extends Model
         'status',
         'processed_by',
         'processed_at',
+        'journal_entry_id',
     ];
 
     protected function casts(): array
@@ -40,5 +41,10 @@ class PayrollPeriod extends Model
     public function processor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'processed_by');
+    }
+
+    public function journalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class);
     }
 }

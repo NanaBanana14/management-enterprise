@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -58,6 +58,9 @@ const status = ref(props.filters.status ?? '');
 watch(status, (value) => {
     router.get(route('hris.leave.index'), { status: value || undefined }, { preserveState: true, replace: true });
 });
+
+const statusOptions = [{ value: '', label: 'All statuses' }, ...props.statuses.map((s) => ({ value: s.value, label: s.label }))];
+const leaveTypeOptions = props.leaveTypes.map((t) => ({ value: t.id, label: t.name }));
 
 const statusVariant: Record<string, 'success' | 'warning' | 'outline' | 'destructive' | 'secondary'> = {
     pending: 'warning',
@@ -135,10 +138,7 @@ function cancelRequest() {
                 </Card>
             </div>
 
-            <Select v-if="canApprove" v-model="status" class="sm:w-44">
-                <option value="">All statuses</option>
-                <option v-for="s in statuses" :key="s.value" :value="s.value">{{ s.label }}</option>
-            </Select>
+            <SearchableSelect v-if="canApprove" v-model="status" class="sm:w-44" :options="statusOptions" />
 
             <Table>
                 <TableHeader>
@@ -199,10 +199,7 @@ function cancelRequest() {
                 <form class="space-y-4" @submit.prevent="submitRequest">
                     <div class="grid gap-2">
                         <Label for="leave_type_id">Leave type</Label>
-                        <Select id="leave_type_id" v-model="requestForm.leave_type_id">
-                            <option value="" disabled>Select a type</option>
-                            <option v-for="t in leaveTypes" :key="t.id" :value="t.id">{{ t.name }}</option>
-                        </Select>
+                        <SearchableSelect v-model="requestForm.leave_type_id" placeholder="Select a type" :options="leaveTypeOptions" />
                         <InputError :message="requestForm.errors.leave_type_id" />
                     </div>
                     <div class="grid grid-cols-2 gap-4">

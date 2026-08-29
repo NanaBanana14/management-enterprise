@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SalesOrder extends Model
 {
-    protected $fillable = ['number', 'customer_id', 'warehouse_id', 'date', 'status', 'notes', 'created_by'];
+    protected $fillable = ['number', 'customer_id', 'warehouse_id', 'date', 'status', 'notes', 'created_by', 'invoice_id'];
 
     protected $casts = ['date' => 'date'];
 
@@ -25,5 +25,10 @@ class SalesOrder extends Model
     public function lines(): HasMany
     {
         return $this->hasMany(SalesOrderLine::class);
+    }
+
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class);
     }
 }

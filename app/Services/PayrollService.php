@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\OvertimeStatus;
 use App\Enums\PayslipItemType;
 use App\Enums\PayslipStatus;
+use App\Models\Account;
 use App\Models\Employee;
 use App\Models\PayrollPeriod;
 use App\Models\Payslip;
@@ -14,6 +15,8 @@ use Illuminate\Validation\ValidationException;
 
 class PayrollService
 {
+    public function __construct(private JournalService $journal) {}
+
     public function generate(PayrollPeriod $period): int
     {
         return DB::transaction(function () use ($period) {
@@ -112,10 +115,20 @@ class PayrollService
 
             $period->payslips()->update(['status' => PayslipStatus::Paid->value]);
 
+            $totalNetSalary = (float) $period->payslips()->sum('net_salary');
+            $salaryExpense = Account::where('type', 'expense')->orderBy('code')->firstOrFail();
+            $cashBank = Account::where('is_cash_bank', true)->orderBy('code')->firstOrFail();
+
+            $entry = $this->journal->create(now()->toDateString(), 'PR-'.now()->format('Ym').'-'.$period->id, "Payroll for {$period->name}", [
+                ['account_id' => $salaryExpense->id, 'debit' => $totalNetSalary, 'credit' => 0],
+                ['account_id' => $cashBank->id, 'debit' => 0, 'credit' => $totalNetSalary],
+            ], $processor);
+
             $period->update([
                 'status' => 'closed',
                 'processed_by' => $processor->id,
                 'processed_at' => now(),
+                'journal_entry_id' => $entry->id,
             ]);
 
             return $period;

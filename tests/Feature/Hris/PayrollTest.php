@@ -3,6 +3,7 @@
 namespace Tests\Feature\Hris;
 
 use App\Enums\PayslipItemType;
+use App\Models\Account;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\PayrollPeriod;
@@ -144,5 +145,25 @@ class PayrollTest extends TestCase
 
         $this->expectException(ValidationException::class);
         $service->approve($payslip, $approver);
+    }
+
+    public function test_closing_a_period_posts_a_payroll_journal_entry()
+    {
+        Account::create(['code' => '5100', 'name' => 'Salary Expense', 'type' => 'expense']);
+        Account::create(['code' => '1100', 'name' => 'Cash', 'type' => 'asset', 'is_cash_bank' => true]);
+
+        $this->employee(5_000_000);
+        $period = $this->period();
+        $service = app(PayrollService::class);
+        $processor = User::factory()->create();
+
+        $service->generate($period);
+        $service->approve($period->payslips()->first(), $processor);
+        $service->closePeriod($period, $processor);
+
+        $period->refresh();
+        $this->assertSame('closed', $period->status->value);
+        $this->assertNotNull($period->journal_entry_id);
+        $this->assertSame(5_000_000.0, (float) $period->journalEntry->lines()->sum('debit'));
     }
 }

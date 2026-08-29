@@ -23,11 +23,14 @@ class ErpSeeder extends Seeder
     ];
 
     private const PRODUCTS = [
-        ['SKU-001', 'Office Chair', 'pcs', 850000],
-        ['SKU-002', 'Standing Desk', 'pcs', 2200000],
-        ['SKU-003', 'A4 Paper Ream', 'ream', 45000],
-        ['SKU-004', 'Wireless Mouse', 'pcs', 125000],
-        ['SKU-005', 'Laptop Stand', 'pcs', 175000],
+        ['SKU-001', 'Office Chair', 'pcs', 850000, 42],
+        ['SKU-002', 'Standing Desk', 'pcs', 2200000, 18],
+        ['SKU-003', 'A4 Paper Ream', 'ream', 45000, 240],
+        ['SKU-004', 'Wireless Mouse', 'pcs', 125000, 96],
+        ['SKU-005', 'Laptop Stand', 'pcs', 175000, 8],
+        ['SKU-006', 'Ergonomic Keyboard', 'pcs', 310000, 54],
+        ['SKU-007', 'Monitor Arm', 'pcs', 420000, 6],
+        ['SKU-008', 'Filing Cabinet', 'pcs', 1350000, 15],
     ];
 
     private const SUPPLIERS = [
@@ -49,6 +52,8 @@ class ErpSeeder extends Seeder
         foreach (self::PRODUCTS as [$sku, $name, $unit, $price]) {
             Product::query()->updateOrCreate(['sku' => $sku], ['name' => $name, 'unit' => $unit, 'price' => $price]);
         }
+
+        $initialStock = collect(self::PRODUCTS)->mapWithKeys(fn ($p) => [$p[0] => $p[4]]);
 
         foreach (self::SUPPLIERS as [$name, $contact, $phone, $email]) {
             Supplier::query()->updateOrCreate(['name' => $name], ['contact_person' => $contact, 'phone' => $phone, 'email' => $email]);
@@ -72,7 +77,8 @@ class ErpSeeder extends Seeder
                 continue;
             }
 
-            $inventory->adjust($product, $mainWarehouse, 'in', 50, 'Initial stock', $admin);
+            $quantity = $initialStock->get($product->sku, 50);
+            $inventory->adjust($product, $mainWarehouse, 'in', $quantity, 'Initial stock', $admin);
         }
 
         if (! Invoice::exists()) {

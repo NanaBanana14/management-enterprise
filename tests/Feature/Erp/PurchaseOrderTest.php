@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Erp;
 
+use App\Models\Account;
 use App\Models\Product;
 use App\Models\Supplier;
 use App\Models\User;
@@ -14,8 +15,10 @@ class PurchaseOrderTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_receiving_a_purchase_order_increases_stock()
+    public function test_receiving_a_purchase_order_increases_stock_and_creates_a_payable()
     {
+        Account::create(['code' => '2100', 'name' => 'Accounts Payable', 'type' => 'liability']);
+        Account::create(['code' => '5300', 'name' => 'Purchase Expense', 'type' => 'expense']);
         $supplier = Supplier::create(['name' => 'Test Supplier']);
         $warehouse = Warehouse::create(['code' => 'WH-P1', 'name' => 'Test Warehouse']);
         $product = Product::create(['sku' => 'SKU-P1', 'name' => 'Test Product', 'unit' => 'pcs', 'price' => 1000]);
@@ -30,5 +33,7 @@ class PurchaseOrderTest extends TestCase
 
         $this->assertSame('received', $order->fresh()->status);
         $this->assertSame(10.0, $product->fresh()->totalStock());
+        $this->assertNotNull($order->fresh()->payable_id);
+        $this->assertSame(10_000.0, (float) $order->fresh()->payable->amount);
     }
 }

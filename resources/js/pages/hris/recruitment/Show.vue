@@ -2,7 +2,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Select } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
@@ -53,6 +53,8 @@ const stageVariant: Record<string, 'outline' | 'warning' | 'success' | 'destruct
     rejected: 'destructive',
 };
 
+const stageOptions = props.stages.map((s) => ({ value: s.value, label: s.label }));
+
 const noteForm = useForm({ note: '' });
 function submitNote() {
     noteForm.post(route('hris.recruitment.applicants.notes.store', props.applicant.id), {
@@ -75,9 +77,7 @@ function submitNote() {
                     <p class="text-sm text-muted-foreground">{{ applicant.email }} · Applied {{ applicant.applied_at }} for {{ applicant.vacancy.title }}</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <Select v-if="!isTerminal" :model-value="applicant.stage" @update:model-value="moveStage">
-                        <option v-for="s in stages" :key="s.value" :value="s.value">{{ s.label }}</option>
-                    </Select>
+                    <SearchableSelect v-if="!isTerminal" class="w-44" :model-value="applicant.stage" :options="stageOptions" @update:model-value="moveStage" />
                     <Button v-if="applicant.stage === 'hired'" as-child>
                         <Link :href="`/hris/employees/create?name=${encodeURIComponent(applicant.name)}&email=${encodeURIComponent(applicant.email)}`">
                             <UserPlus class="size-4" />

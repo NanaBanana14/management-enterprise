@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -53,6 +53,8 @@ const status = ref(props.filters.status ?? '');
 watch(status, (value) => {
     router.get(route('hris.overtime.index'), { status: value || undefined }, { preserveState: true, replace: true });
 });
+
+const statusOptions = [{ value: '', label: 'All statuses' }, ...props.statuses.map((s) => ({ value: s.value, label: s.label }))];
 
 const statusVariant: Record<string, 'success' | 'warning' | 'outline' | 'destructive' | 'secondary'> = {
     pending: 'warning',
@@ -115,10 +117,7 @@ function cancelRequest() {
                 </template>
             </PageHeader>
 
-            <Select v-if="canApprove" v-model="status" class="sm:w-44">
-                <option value="">All statuses</option>
-                <option v-for="s in statuses" :key="s.value" :value="s.value">{{ s.label }}</option>
-            </Select>
+            <SearchableSelect v-if="canApprove" v-model="status" class="sm:w-44" :options="statusOptions" />
 
             <Table>
                 <TableHeader>
