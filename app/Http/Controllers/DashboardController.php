@@ -52,7 +52,7 @@ class DashboardController extends Controller
             'topProductsByStock' => $this->topProductsByStock(),
         ] : null;
 
-        return Inertia::render('Dashboard', [
+        $platform = $user->can('users.view') ? [
             'stats' => [
                 'totalUsers' => User::count(),
                 'activeUsers' => User::where('is_active', true)->count(),
@@ -63,9 +63,13 @@ class DashboardController extends Controller
                 ->orderByDesc('users_count')
                 ->get()
                 ->map(fn (Role $role) => ['role' => $role->name, 'count' => $role->users_count]),
+        ] : null;
+
+        return Inertia::render('Dashboard', [
             'hris' => $hris,
             'finance' => $finance,
             'erp' => $erp,
+            'platform' => $platform,
         ]);
     }
 

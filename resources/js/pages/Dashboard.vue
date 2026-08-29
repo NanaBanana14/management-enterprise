@@ -49,17 +49,23 @@ interface ErpStats {
     topProductsByStock: { name: string; quantity: number }[];
 }
 
-const props = defineProps<{
+interface PlatformStats {
     stats: {
         totalUsers: number;
         activeUsers: number;
         totalRoles: number;
     };
     usersByRole: { role: string; count: number }[];
+}
+
+const props = defineProps<{
     hris: HrisStats | null;
     finance: FinanceStats | null;
     erp: ErpStats | null;
+    platform: PlatformStats | null;
 }>();
+
+const hasAnySection = computed(() => Boolean(props.hris || props.finance || props.erp || props.platform));
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
 
@@ -308,7 +314,7 @@ const leaveBreakdown = computed(() => {
                 </Card>
             </div>
 
-            <div class="space-y-3">
+            <div v-if="platform" class="space-y-3">
                 <h2 class="text-sm font-medium text-muted-foreground">Platform</h2>
                 <div class="grid gap-4 sm:grid-cols-3">
                     <Card>
@@ -317,7 +323,7 @@ const leaveBreakdown = computed(() => {
                             <Users class="size-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div class="text-2xl font-semibold">{{ stats.totalUsers }}</div>
+                            <div class="text-2xl font-semibold">{{ platform.stats.totalUsers }}</div>
                         </CardContent>
                     </Card>
 
@@ -327,7 +333,7 @@ const leaveBreakdown = computed(() => {
                             <UserCheck class="size-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div class="text-2xl font-semibold">{{ stats.activeUsers }}</div>
+                            <div class="text-2xl font-semibold">{{ platform.stats.activeUsers }}</div>
                         </CardContent>
                     </Card>
 
@@ -337,7 +343,7 @@ const leaveBreakdown = computed(() => {
                             <ShieldCheck class="size-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div class="text-2xl font-semibold">{{ stats.totalRoles }}</div>
+                            <div class="text-2xl font-semibold">{{ platform.stats.totalRoles }}</div>
                         </CardContent>
                     </Card>
                 </div>
@@ -347,18 +353,22 @@ const leaveBreakdown = computed(() => {
                         <CardTitle class="text-base">Users by Role</CardTitle>
                     </CardHeader>
                     <CardContent class="space-y-3">
-                        <div v-for="item in usersByRole" :key="item.role" class="flex items-center gap-3">
+                        <div v-for="item in platform.usersByRole" :key="item.role" class="flex items-center gap-3">
                             <span class="w-40 shrink-0 truncate text-sm">{{ item.role }}</span>
                             <div class="h-2 flex-1 overflow-hidden rounded-full bg-muted">
                                 <div
                                     class="h-full rounded-full bg-primary"
-                                    :style="{ width: `${stats.totalUsers ? (item.count / stats.totalUsers) * 100 : 0}%` }"
+                                    :style="{ width: `${platform.stats.totalUsers ? (item.count / platform.stats.totalUsers) * 100 : 0}%` }"
                                 />
                             </div>
                             <span class="w-6 shrink-0 text-right text-sm text-muted-foreground">{{ item.count }}</span>
                         </div>
                     </CardContent>
                 </Card>
+            </div>
+
+            <div v-if="!hasAnySection" class="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+                Nothing to show here yet. Use the sidebar to get to the areas you have access to.
             </div>
         </div>
     </AppLayout>

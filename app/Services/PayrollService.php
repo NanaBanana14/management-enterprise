@@ -104,6 +104,26 @@ class PayrollService
         });
     }
 
+    public function approveAll(PayrollPeriod $period, User $approver): int
+    {
+        return DB::transaction(function () use ($period, $approver) {
+            $draftPayslips = $period->payslips()
+                ->where('status', PayslipStatus::Draft->value)
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($draftPayslips as $payslip) {
+                $payslip->update([
+                    'status' => PayslipStatus::Approved->value,
+                    'approved_by' => $approver->id,
+                    'approved_at' => now(),
+                ]);
+            }
+
+            return $draftPayslips->count();
+        });
+    }
+
     public function closePeriod(PayrollPeriod $period, User $processor): PayrollPeriod
     {
         return DB::transaction(function () use ($period, $processor) {

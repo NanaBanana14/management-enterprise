@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -6,8 +7,8 @@ import { Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableR
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
-import { RefreshCw } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { CheckCheck, Lock, RefreshCw } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
 
 interface PayslipRow {
     id: number;
@@ -49,6 +50,31 @@ function generate() {
     generating.value = true;
     router.post(route('hris.payroll.periods.generate', props.period.id), {}, { onFinish: () => (generating.value = false) });
 }
+
+const draftCount = computed(() => props.payslips.filter((p) => p.status === 'draft').length);
+const canClose = computed(() => props.canApprove && props.period.status === 'open' && props.payslips.length > 0 && draftCount.value === 0);
+
+const showApproveAll = ref(false);
+const approvingAll = ref(false);
+function approveAll() {
+    approvingAll.value = true;
+    router.post(
+        route('hris.payroll.periods.approveAll', props.period.id),
+        {},
+        { onFinish: () => (approvingAll.value = false), onSuccess: () => (showApproveAll.value = false) },
+    );
+}
+
+const showClosePeriod = ref(false);
+const closing = ref(false);
+function closePeriod() {
+    closing.value = true;
+    router.post(
+        route('hris.payroll.periods.close', props.period.id),
+        {},
+        { onFinish: () => (closing.value = false), onSuccess: () => (showClosePeriod.value = false) },
+    );
+}
 </script>
 
 <template>
@@ -58,10 +84,20 @@ function generate() {
         <div class="flex flex-1 flex-col gap-6 p-6">
             <PageHeader :title="period.name" :description="`${period.start_date} – ${period.end_date}`">
                 <template #actions>
-                    <Button v-if="canProcess" variant="outline" :disabled="generating" @click="generate">
-                        <RefreshCw class="size-4" :class="{ 'animate-spin': generating }" />
-                        Generate Payslips
-                    </Button>
+                    <div class="flex gap-2">
+                        <Button v-if="canProcess" variant="outline" :disabled="generating" @click="generate">
+                            <RefreshCw class="size-4" :class="{ 'animate-spin': generating }" />
+                            Generate Payslips
+                        </Button>
+                        <Button v-if="canApprove && draftCount > 0" :disabled="approvingAll" @click="showApproveAll = true">
+                            <CheckCheck class="size-4" />
+                            Approve All ({{ draftCount }})
+                        </Button>
+                        <Button v-if="canClose" :disabled="closing" @click="showClosePeriod = true">
+                            <Lock class="size-4" />
+                            Close Period
+                        </Button>
+                    </div>
                 </template>
             </PageHeader>
 
@@ -105,5 +141,26 @@ function generate() {
                 </TableBody>
             </Table>
         </div>
+
+        <ConfirmDialog
+            :open="showApproveAll"
+            title="Approve all draft payslips"
+            :description="`This approves all ${draftCount} draft payslip(s) in ${period.name}. This cannot be undone.`"
+            confirm-label="Approve All"
+            :destructive="false"
+            :processing="approvingAll"
+            @update:open="(v) => (showApproveAll = v)"
+            @confirm="approveAll"
+        />
+
+        <ConfirmDialog
+            :open="showClosePeriod"
+            title="Close payroll period"
+            :description="`This marks every payslip in ${period.name} as paid and posts one journal entry to Finance for the total net salary. This cannot be undone.`"
+            confirm-label="Close Period"
+            :processing="closing"
+            @update:open="(v) => (showClosePeriod = v)"
+            @confirm="closePeriod"
+        />
     </AppLayout>
 </template>
