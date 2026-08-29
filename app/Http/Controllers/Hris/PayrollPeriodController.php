@@ -51,4 +51,13 @@ class PayrollPeriodController extends Controller
 
         return back()->with('success', "Generated {$count} payslip(s).");
     }
+
+    public function close(Request $request, PayrollPeriod $period): RedirectResponse
+    {
+        abort_unless($request->user()->can('payroll.approve'), 403);
+
+        $this->payroll->closePeriod($period, $request->user());
+
+        return back()->with('success', "Payroll period \"{$period->name}\" closed and posted to Finance.");
+    }
 }

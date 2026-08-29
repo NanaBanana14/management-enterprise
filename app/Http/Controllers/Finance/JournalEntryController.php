@@ -15,14 +15,19 @@ class JournalEntryController extends Controller
 {
     public function __construct(private readonly JournalService $journal) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $search = $request->string('search')->trim();
+
         return Inertia::render('finance/journal/Index', [
             'entries' => JournalEntry::query()
                 ->withSum('lines as total_debit', 'debit')
+                ->when($search->isNotEmpty(), fn ($query) => $query->where(fn ($q) => $q->where('reference', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")))
                 ->orderByDesc('date')
                 ->orderByDesc('id')
                 ->paginate(15)
+                ->withQueryString()
                 ->through(fn (JournalEntry $entry) => [
                     'id' => $entry->id,
                     'date' => $entry->date->format('Y-m-d'),
@@ -30,6 +35,7 @@ class JournalEntryController extends Controller
                     'description' => $entry->description,
                     'total' => (float) $entry->total_debit,
                 ]),
+            'filters' => $request->only('search'),
         ]);
     }
 

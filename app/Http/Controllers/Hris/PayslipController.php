@@ -139,4 +139,13 @@ class PayslipController extends Controller
 
         return back()->with('success', 'Payslip approved.');
     }
+
+    public function approveAll(Request $request, PayrollPeriod $period): RedirectResponse
+    {
+        abort_unless($request->user()->can('payroll.approve'), 403);
+
+        $count = $this->payroll->approveAll($period, $request->user());
+
+        return back()->with('success', "{$count} payslip(s) approved.");
+    }
 }

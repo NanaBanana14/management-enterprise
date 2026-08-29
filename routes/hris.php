@@ -67,6 +67,8 @@ Route::prefix('hris')->name('hris.')->middleware(['auth', 'verified'])->group(fu
         Route::post('payroll/periods', [PayrollPeriodController::class, 'store'])->name('payroll.periods.store');
         Route::get('payroll/periods/{period}', [PayslipController::class, 'index'])->name('payroll.periods.show');
         Route::post('payroll/periods/{period}/generate', [PayrollPeriodController::class, 'generate'])->name('payroll.periods.generate');
+        Route::post('payroll/periods/{period}/approve-all', [PayslipController::class, 'approveAll'])->name('payroll.periods.approveAll');
+        Route::post('payroll/periods/{period}/close', [PayrollPeriodController::class, 'close'])->name('payroll.periods.close');
     });
 
     Route::middleware('permission:kpi.view')->group(function () {

@@ -166,4 +166,38 @@ class PayrollTest extends TestCase
         $this->assertNotNull($period->journal_entry_id);
         $this->assertSame(5_000_000.0, (float) $period->journalEntry->lines()->sum('debit'));
     }
+
+    public function test_approve_all_approves_every_draft_payslip_in_the_period()
+    {
+        $this->employee();
+        $this->employee();
+        $this->employee();
+        $period = $this->period();
+        $service = app(PayrollService::class);
+        $approver = User::factory()->create();
+
+        $service->generate($period);
+        $count = $service->approveAll($period, $approver);
+
+        $this->assertSame(3, $count);
+        $this->assertSame(3, $period->payslips()->where('status', 'approved')->count());
+        $this->assertSame(0, $period->payslips()->where('status', 'draft')->count());
+    }
+
+    public function test_approve_all_skips_payslips_that_are_already_approved()
+    {
+        $this->employee();
+        $this->employee();
+        $period = $this->period();
+        $service = app(PayrollService::class);
+        $approver = User::factory()->create();
+
+        $service->generate($period);
+        $service->approve($period->payslips()->first(), $approver);
+
+        $count = $service->approveAll($period, $approver);
+
+        $this->assertSame(1, $count);
+        $this->assertSame(2, $period->payslips()->where('status', 'approved')->count());
+    }
 }

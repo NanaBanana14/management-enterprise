@@ -2,11 +2,13 @@
 import PageHeader from '@/components/PageHeader.vue';
 import Pagination from '@/components/Pagination.vue';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem, SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { Plus } from 'lucide-vue-next';
+import { Plus, Search } from 'lucide-vue-next';
+import { ref, watch } from 'vue';
 
 interface EntryRow {
     id: number;
@@ -24,7 +26,7 @@ interface Paginated<T> {
     links: { url: string | null; label: string; active: boolean }[];
 }
 
-defineProps<{ entries: Paginated<EntryRow> }>();
+const props = defineProps<{ entries: Paginated<EntryRow>; filters: { search?: string } }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
@@ -33,6 +35,16 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const page = usePage<SharedData>();
 const canCreate = page.props.auth.permissions.includes('journal.create');
+
+const search = ref(props.filters.search ?? '');
+
+watch(search, (value) => {
+    router.get(
+        route('finance.journal.index'),
+        { search: value || undefined },
+        { preserveState: true, replace: true },
+    );
+});
 
 function formatCurrency(value: number): string {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value);
@@ -54,6 +66,11 @@ function formatCurrency(value: number): string {
                     </Button>
                 </template>
             </PageHeader>
+
+            <div class="relative w-full sm:max-w-xs">
+                <Search class="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input v-model="search" placeholder="Search reference or description" class="pl-8" />
+            </div>
 
             <Table>
                 <TableHeader>
