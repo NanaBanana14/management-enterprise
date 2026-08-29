@@ -53,8 +53,8 @@ class ChartOfAccountsSeeder extends Seeder
             'created_by' => $admin->id,
         ]);
         $opening->lines()->createMany([
-            ['account_id' => $cash->id, 'debit' => 50_000_000, 'credit' => 0],
-            ['account_id' => $capital->id, 'debit' => 0, 'credit' => 50_000_000],
+            ['account_id' => $cash->id, 'debit' => 4_000_000_000, 'credit' => 0],
+            ['account_id' => $capital->id, 'debit' => 0, 'credit' => 4_000_000_000],
         ]);
 
         $payroll = JournalEntry::create([

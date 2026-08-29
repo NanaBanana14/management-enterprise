@@ -60,6 +60,8 @@ class DatabaseSeeder extends Seeder
 
         $this->call(LeaveRequestSeeder::class);
         $this->call(ChartOfAccountsSeeder::class);
+        $this->call(PayrollSeeder::class);
         $this->call(ErpSeeder::class);
+        $this->call(SalesOrderSeeder::class);
     }
 }
