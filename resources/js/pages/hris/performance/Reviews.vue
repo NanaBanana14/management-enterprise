@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
@@ -38,6 +38,7 @@ const form = useForm({ employee_id: '' as number | '' });
 const submit = () => form.post(route('hris.performance.periods.reviews.store', props.period.id), { onSuccess: () => (showCreateDialog.value = false) });
 
 const statusVariant: Record<string, 'warning' | 'success'> = { draft: 'warning', submitted: 'success' };
+const employeeOptions = props.availableEmployees.map((e) => ({ value: e.id, label: e.name }));
 </script>
 
 <template>
@@ -93,10 +94,7 @@ const statusVariant: Record<string, 'warning' | 'success'> = { draft: 'warning',
                 <form class="space-y-4" @submit.prevent="submit">
                     <div class="grid gap-2">
                         <Label for="employee_id">Employee</Label>
-                        <Select id="employee_id" v-model="form.employee_id">
-                            <option value="" disabled>Select an employee</option>
-                            <option v-for="e in availableEmployees" :key="e.id" :value="e.id">{{ e.name }}</option>
-                        </Select>
+                        <SearchableSelect v-model="form.employee_id" placeholder="Select an employee" :options="employeeOptions" />
                         <InputError :message="form.errors.employee_id" />
                     </div>
                     <DialogFooter>

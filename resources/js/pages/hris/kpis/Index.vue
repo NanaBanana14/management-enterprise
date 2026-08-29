@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem, SharedData } from '@/types';
@@ -30,7 +30,7 @@ interface CategoryRow {
     kpis: KpiRow[];
 }
 
-defineProps<{ categories: CategoryRow[] }>();
+const props = defineProps<{ categories: CategoryRow[] }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
@@ -61,6 +61,8 @@ function submitKpi() {
         },
     });
 }
+
+const categoryOptions = props.categories.map((c) => ({ value: c.id, label: c.name }));
 
 const deleteTarget = ref<KpiRow | null>(null);
 function destroyKpi() {
@@ -148,10 +150,7 @@ function destroyKpi() {
                 <form class="space-y-4" @submit.prevent="submitKpi">
                     <div class="grid gap-2">
                         <Label for="kpi_category_id">Category</Label>
-                        <Select id="kpi_category_id" v-model="kpiForm.kpi_category_id">
-                            <option value="" disabled>Select a category</option>
-                            <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
-                        </Select>
+                        <SearchableSelect v-model="kpiForm.kpi_category_id" placeholder="Select a category" :options="categoryOptions" />
                         <InputError :message="kpiForm.errors.kpi_category_id" />
                     </div>
                     <div class="grid gap-2">

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Head, router, useForm } from '@inertiajs/vue3';
@@ -58,6 +58,11 @@ const statusVariant: Record<string, 'success' | 'warning' | 'outline'> = {
 };
 
 const typeLabel: Record<string, string> = { allowance: 'Allowance', bonus: 'Bonus', deduction: 'Deduction' };
+const itemTypeOptions = [
+    { value: 'allowance', label: 'Allowance' },
+    { value: 'bonus', label: 'Bonus' },
+    { value: 'deduction', label: 'Deduction' },
+];
 
 const showItemDialog = ref(false);
 const itemForm = useForm({
@@ -172,11 +177,7 @@ function approve() {
                 <form class="space-y-4" @submit.prevent="submitItem">
                     <div class="grid gap-2">
                         <Label for="type">Type</Label>
-                        <Select id="type" v-model="itemForm.type">
-                            <option value="allowance">Allowance</option>
-                            <option value="bonus">Bonus</option>
-                            <option value="deduction">Deduction</option>
-                        </Select>
+                        <SearchableSelect v-model="itemForm.type" :options="itemTypeOptions" />
                         <InputError :message="itemForm.errors.type" />
                     </div>
                     <div class="grid gap-2">

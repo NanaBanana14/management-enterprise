@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
@@ -76,6 +76,9 @@ function statusLabel(value: string): string {
     return props.statuses.find((s) => s.value === value)?.label ?? value;
 }
 
+const departmentOptions = [{ value: '', label: 'All departments' }, ...props.departments.map((d) => ({ value: String(d.id), label: d.name }))];
+const statusOptions = [{ value: '', label: 'All statuses' }, ...props.statuses.map((s) => ({ value: s.value, label: s.label }))];
+
 const checkInForm = useForm({});
 const checkOutForm = useForm({});
 
@@ -129,14 +132,8 @@ function checkOut() {
             </Card>
 
             <div class="flex flex-col gap-3 sm:flex-row">
-                <Select v-if="canManage" v-model="departmentId" class="sm:w-56">
-                    <option value="">All departments</option>
-                    <option v-for="d in departments" :key="d.id" :value="String(d.id)">{{ d.name }}</option>
-                </Select>
-                <Select v-model="status" class="sm:w-40">
-                    <option value="">All statuses</option>
-                    <option v-for="s in statuses" :key="s.value" :value="s.value">{{ s.label }}</option>
-                </Select>
+                <SearchableSelect v-if="canManage" v-model="departmentId" class="sm:w-56" :options="departmentOptions" />
+                <SearchableSelect v-model="status" class="sm:w-40" :options="statusOptions" />
                 <Input v-model="from" type="date" class="sm:w-44" />
                 <Input v-model="to" type="date" class="sm:w-44" />
             </div>

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem, SharedData } from '@/types';
@@ -30,7 +30,7 @@ interface CategoryRow {
     programs: ProgramRow[];
 }
 
-defineProps<{
+const props = defineProps<{
     categories: CategoryRow[];
     hasEmployeeProfile: boolean;
 }>();
@@ -81,6 +81,8 @@ function submitProgram() {
         },
     });
 }
+
+const categoryOptions = props.categories.map((c) => ({ value: c.id, label: c.name }));
 </script>
 
 <template>
@@ -160,10 +162,7 @@ function submitProgram() {
                 <form class="space-y-4" @submit.prevent="submitProgram">
                     <div class="grid gap-2">
                         <Label for="training_category_id">Category</Label>
-                        <Select id="training_category_id" v-model="programForm.training_category_id">
-                            <option value="" disabled>Select a category</option>
-                            <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
-                        </Select>
+                        <SearchableSelect v-model="programForm.training_category_id" placeholder="Select a category" :options="categoryOptions" />
                         <InputError :message="programForm.errors.training_category_id" />
                     </div>
                     <div class="grid gap-2">
