@@ -15,16 +15,21 @@ class ChartOfAccountsSeeder extends Seeder
         ['1200', 'Bank', 'asset'],
         ['1300', 'Accounts Receivable', 'asset'],
         ['1400', 'Inventory', 'asset'],
+        ['1500', 'Fixed Assets', 'asset'],
+        ['1510', 'Accumulated Depreciation', 'asset'],
         ['2000', 'Liabilities', 'liability'],
         ['2100', 'Accounts Payable', 'liability'],
         ['3000', 'Equity', 'equity'],
         ['3100', "Owner's Capital", 'equity'],
         ['4000', 'Revenue', 'revenue'],
         ['4100', 'Sales Revenue', 'revenue'],
+        ['4200', 'Gain on Disposal of Assets', 'revenue'],
         ['5000', 'Expenses', 'expense'],
         ['5100', 'Salary Expense', 'expense'],
         ['5200', 'Operational Expense', 'expense'],
         ['5300', 'Purchase Expense', 'expense'],
+        ['5400', 'Depreciation Expense', 'expense'],
+        ['5500', 'Loss on Disposal of Assets', 'expense'],
     ];
 
     public function run(): void

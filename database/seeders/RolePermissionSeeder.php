@@ -48,6 +48,8 @@ class RolePermissionSeeder extends Seeder
         'sales' => ['view', 'create', 'approve'],
 
         'opportunity' => ['view', 'manage'],
+
+        'asset' => ['view', 'create', 'manage'],
     ];
 
     private const ROLE_PERMISSIONS = [
@@ -75,6 +77,7 @@ class RolePermissionSeeder extends Seeder
             'invoice.*', 'payable.*', 'report.view',
             'payroll.view', 'payroll.approve',
             'opportunity.view',
+            'asset.view', 'asset.manage',
         ],
 
         'Finance Staff' => [
@@ -87,6 +90,7 @@ class RolePermissionSeeder extends Seeder
 
         'Warehouse Manager' => [
             'warehouse.*', 'inventory.*', 'product.view',
+            'asset.view', 'asset.create',
         ],
 
         'Purchasing Staff' => [

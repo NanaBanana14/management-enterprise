@@ -7,8 +7,10 @@ use App\Enums\LeaveStatus;
 use App\Enums\OvertimeStatus;
 use App\Models\Account;
 use App\Models\Applicant;
+use App\Models\AssetDepreciationEntry;
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Models\FixedAsset;
 use App\Models\Invoice;
 use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
@@ -70,6 +72,18 @@ class DashboardController extends Controller
             'recentOpportunities' => $this->recentOpportunities(),
         ] : null;
 
+        $assets = $user->can('asset.view') ? [
+            'activeAssetsCount' => FixedAsset::where('status', 'active')->count(),
+            'totalBookValue' => (float) FixedAsset::where('status', 'active')->get()->sum(fn (FixedAsset $a) => $a->bookValue()),
+            'depreciationThisMonth' => (float) AssetDepreciationEntry::whereDate('period', now()->startOfMonth()->toDateString())->sum('amount'),
+            'recentAssets' => FixedAsset::query()
+                ->latest('created_at')
+                ->limit(5)
+                ->get()
+                ->map(fn (FixedAsset $a) => ['name' => $a->name, 'category' => $a->category->value, 'status' => $a->status])
+                ->all(),
+        ] : null;
+
         $erp = $user->can('product.view') ? [
             'totalProducts' => Product::count(),
             'lowStockProducts' => Product::query()->withSum('stocks', 'quantity')->get()->filter(fn (Product $p) => (float) ($p->stocks_sum_quantity ?? 0) < 10)->count(),
@@ -99,6 +113,7 @@ class DashboardController extends Controller
             'finance' => $finance,
             'crm' => $crm,
             'erp' => $erp,
+            'assets' => $assets,
             'platform' => $platform,
             'me' => $me,
         ]);

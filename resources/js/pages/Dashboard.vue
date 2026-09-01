@@ -31,6 +31,7 @@ import {
     Users,
     UserSearch,
     Wallet,
+    Wrench,
     XCircle,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -64,6 +65,13 @@ interface CrmStats {
     recentOpportunities: { title: string; customer: string; stage: string }[];
 }
 
+interface AssetStats {
+    activeAssetsCount: number;
+    totalBookValue: number;
+    depreciationThisMonth: number;
+    recentAssets: { name: string; category: string; status: string }[];
+}
+
 interface ErpStats {
     totalProducts: number;
     lowStockProducts: number;
@@ -93,11 +101,14 @@ const props = defineProps<{
     finance: FinanceStats | null;
     crm: CrmStats | null;
     erp: ErpStats | null;
+    assets: AssetStats | null;
     platform: PlatformStats | null;
     me: MyOverview | null;
 }>();
 
-const hasAnySection = computed(() => Boolean(props.hris || props.finance || props.crm || props.erp || props.platform || props.me));
+const hasAnySection = computed(
+    () => Boolean(props.hris || props.finance || props.crm || props.erp || props.assets || props.platform || props.me),
+);
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
 
@@ -198,6 +209,11 @@ const movementLabel: Record<string, string> = {
     out: 'Stock out',
     transfer_in: 'Transfer in',
     transfer_out: 'Transfer out',
+};
+
+const assetStatusBadge: Record<string, 'success' | 'outline'> = {
+    active: 'success',
+    disposed: 'outline',
 };
 
 const payslipStatusBadge: Record<string, 'warning' | 'success' | 'outline'> = {
@@ -629,6 +645,65 @@ const payslipStatusBadge: Record<string, 'warning' | 'success' | 'outline'> = {
                         </CardContent>
                     </Card>
                 </div>
+            </div>
+
+            <div v-if="assets" class="space-y-3">
+                <h2 class="text-sm font-medium text-muted-foreground">Assets</h2>
+                <div class="grid gap-4 sm:grid-cols-3">
+                    <Link href="/assets">
+                        <Card class="transition-colors hover:bg-muted/40">
+                            <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle class="text-sm font-medium text-muted-foreground">Active Assets</CardTitle>
+                                <Wrench class="size-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div class="text-2xl font-semibold">{{ assets.activeAssetsCount }}</div>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                    <Link href="/assets">
+                        <Card class="transition-colors hover:bg-muted/40">
+                            <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle class="text-sm font-medium text-muted-foreground">Total Book Value</CardTitle>
+                                <PiggyBank class="size-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div class="text-2xl font-semibold">{{ formatCurrency(assets.totalBookValue) }}</div>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                    <Link href="/assets">
+                        <Card class="transition-colors hover:bg-muted/40">
+                            <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle class="text-sm font-medium text-muted-foreground">Depreciation This Month</CardTitle>
+                                <FileBarChart class="size-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div class="text-2xl font-semibold">{{ formatCurrency(assets.depreciationThisMonth) }}</div>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                </div>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle class="text-base">Recently Registered</CardTitle>
+                    </CardHeader>
+                    <CardContent class="space-y-1">
+                        <div
+                            v-for="(item, index) in assets.recentAssets"
+                            :key="index"
+                            class="flex items-center justify-between border-b py-2 text-sm last:border-b-0"
+                        >
+                            <div class="truncate pr-2">
+                                <div class="truncate font-medium">{{ item.name }}</div>
+                                <div class="text-xs text-muted-foreground capitalize">{{ item.category }}</div>
+                            </div>
+                            <Badge :variant="assetStatusBadge[item.status] ?? 'outline'">{{ item.status }}</Badge>
+                        </div>
+                        <p v-if="assets.recentAssets.length === 0" class="py-2 text-sm text-muted-foreground">No assets registered yet.</p>
+                    </CardContent>
+                </Card>
             </div>
 
             <div v-if="platform" class="space-y-3">

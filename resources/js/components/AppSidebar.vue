@@ -32,6 +32,7 @@ import {
     Users,
     Wallet,
     Warehouse,
+    Wrench,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
@@ -112,6 +113,10 @@ const erpNavItems = computed<NavItem[]>(() =>
     ).filter(canSee),
 );
 
+const assetsNavItems = computed<NavItem[]>(() =>
+    ([{ title: 'Fixed Assets', href: '/assets', icon: Wrench, permission: 'asset.view' }] satisfies NavItem[]).filter(canSee),
+);
+
 const administrationNavItems = computed<NavItem[]>(() =>
     (
         [
@@ -143,6 +148,7 @@ const administrationNavItems = computed<NavItem[]>(() =>
             <NavMain :items="financeNavItems" label="Finance" />
             <NavMain :items="crmNavItems" label="CRM" />
             <NavMain :items="erpNavItems" label="ERP" />
+            <NavMain :items="assetsNavItems" label="Assets" />
             <NavMain :items="administrationNavItems" label="Administration" />
         </SidebarContent>
 

@@ -40,3 +40,4 @@ require __DIR__.'/hris.php';
 require __DIR__.'/finance.php';
 require __DIR__.'/crm.php';
 require __DIR__.'/erp.php';
+require __DIR__.'/assets.php';
