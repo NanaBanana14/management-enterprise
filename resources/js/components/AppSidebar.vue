@@ -143,13 +143,13 @@ const administrationNavItems = computed<NavItem[]>(() =>
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="platformNavItems" label="Platform" />
-            <NavMain :items="hrisNavItems" label="HRIS" />
-            <NavMain :items="financeNavItems" label="Finance" />
-            <NavMain :items="crmNavItems" label="CRM" />
-            <NavMain :items="erpNavItems" label="ERP" />
-            <NavMain :items="assetsNavItems" label="Assets" />
-            <NavMain :items="administrationNavItems" label="Administration" />
+            <NavMain :items="platformNavItems" label="Platform" :icon="LayoutGrid" />
+            <NavMain :items="hrisNavItems" label="HRIS" :icon="Users" />
+            <NavMain :items="financeNavItems" label="Finance" :icon="Landmark" />
+            <NavMain :items="crmNavItems" label="CRM" :icon="Handshake" />
+            <NavMain :items="erpNavItems" label="ERP" :icon="Boxes" />
+            <NavMain :items="assetsNavItems" label="Assets" :icon="Wrench" />
+            <NavMain :items="administrationNavItems" label="Administration" :icon="ShieldCheck" />
         </SidebarContent>
 
         <SidebarFooter>
