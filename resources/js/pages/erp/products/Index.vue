@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableR
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem, SharedData } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
-import { LoaderCircle, Pencil, Plus } from 'lucide-vue-next';
+import { LoaderCircle, Package, Pencil, Plus } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 interface ProductRow {
@@ -95,7 +95,18 @@ function submit() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    <TableEmpty v-if="products.length === 0" :colspan="7">No products defined yet.</TableEmpty>
+                    <TableEmpty
+                        v-if="products.length === 0"
+                        :colspan="7"
+                        :icon="Package"
+                        title="No products yet"
+                        description="Add your first product to start tracking inventory."
+                    >
+                        <Button v-if="canManage" size="sm" @click="openCreate">
+                            <Plus class="size-4" />
+                            Add Product
+                        </Button>
+                    </TableEmpty>
                     <TableRow v-for="product in products" :key="product.id">
                         <TableCell class="font-medium">{{ product.sku }}</TableCell>
                         <TableCell>{{ product.name }}</TableCell>

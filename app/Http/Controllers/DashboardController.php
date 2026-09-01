@@ -6,17 +6,25 @@ use App\Enums\AttendanceStatus;
 use App\Enums\LeaveStatus;
 use App\Enums\OvertimeStatus;
 use App\Models\Account;
+use App\Models\Applicant;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Invoice;
+use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
+use App\Models\LeaveBalance;
 use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
 use App\Models\Payable;
+use App\Models\Payslip;
+use App\Models\PerformanceReview;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\SalesOrder;
+use App\Models\StockMovement;
+use App\Models\TrainingEnrollment;
 use App\Models\User;
+use App\Models\Vacancy;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -35,21 +43,29 @@ class DashboardController extends Controller
             'pendingOvertime' => OvertimeRequest::where('status', OvertimeStatus::Pending->value)->count(),
             'attendanceTrend' => $this->attendanceTrend(),
             'leaveStatusBreakdown' => $this->leaveStatusBreakdown(),
+            'recentLeaveRequests' => $user->can('leave.view') ? $this->recentLeaveRequests() : null,
+            'recruitmentSummary' => $user->can('recruitment.view') ? $this->recruitmentSummary() : null,
+            'performanceSummary' => $user->can('performance.view') ? $this->performanceSummary() : null,
+            'trainingSummary' => $user->can('training.view') ? $this->trainingSummary() : null,
         ] : null;
 
         $finance = $user->can('report.view') ? [
             'cashBankBalance' => Account::where('is_cash_bank', true)->get()->sum(fn (Account $a) => $a->balance()),
             'receivableOutstanding' => (float) Invoice::where('status', 'unpaid')->sum('amount'),
             'payableOutstanding' => (float) Payable::where('status', 'unpaid')->sum('amount'),
+            'receivableOverdue' => Invoice::where('status', 'unpaid')->whereDate('due_date', '<', now())->count(),
+            'payableOverdue' => Payable::where('status', 'unpaid')->whereDate('due_date', '<', now())->count(),
             'cashFlowTrend' => $this->cashFlowTrend(),
+            'recentTransactions' => $this->recentTransactions(),
         ] : null;
 
         $erp = $user->can('product.view') ? [
             'totalProducts' => Product::count(),
             'lowStockProducts' => Product::query()->withSum('stocks', 'quantity')->get()->filter(fn (Product $p) => (float) ($p->stocks_sum_quantity ?? 0) < 10)->count(),
-            'draftPurchaseOrders' => PurchaseOrder::where('status', 'draft')->count(),
-            'draftSalesOrders' => SalesOrder::where('status', 'draft')->count(),
+            'draftPurchaseOrders' => $user->can('purchase.view') ? PurchaseOrder::where('status', 'draft')->count() : null,
+            'draftSalesOrders' => $user->can('sales.view') ? SalesOrder::where('status', 'draft')->count() : null,
             'topProductsByStock' => $this->topProductsByStock(),
+            'recentStockMovements' => $this->recentStockMovements(),
         ] : null;
 
         $platform = $user->can('users.view') ? [
@@ -65,11 +81,14 @@ class DashboardController extends Controller
                 ->map(fn (Role $role) => ['role' => $role->name, 'count' => $role->users_count]),
         ] : null;
 
+        $me = $user->employee ? $this->myOverview($user->employee) : null;
+
         return Inertia::render('Dashboard', [
             'hris' => $hris,
             'finance' => $finance,
             'erp' => $erp,
             'platform' => $platform,
+            'me' => $me,
         ]);
     }
 
@@ -99,6 +118,55 @@ class DashboardController extends Controller
             ->all();
     }
 
+    private function recentLeaveRequests(): array
+    {
+        return LeaveRequest::query()
+            ->with(['employee:id,name', 'leaveType:id,name'])
+            ->latest('created_at')
+            ->limit(5)
+            ->get()
+            ->map(fn (LeaveRequest $r) => [
+                'employee' => $r->employee->name,
+                'type' => $r->leaveType->name,
+                'days' => (float) $r->days,
+                'status' => $r->status->value,
+            ])
+            ->all();
+    }
+
+    private function recruitmentSummary(): array
+    {
+        return [
+            'openVacancies' => Vacancy::where('status', 'open')->count(),
+            'activeApplicants' => Applicant::whereNotIn('stage', ['hired', 'rejected'])->count(),
+        ];
+    }
+
+    private function performanceSummary(): array
+    {
+        $current = PerformanceReview::query()->latest('created_at')->first()?->performance_period_id;
+
+        if (! $current) {
+            return ['periodName' => null, 'submitted' => 0, 'total' => 0];
+        }
+
+        $reviews = PerformanceReview::where('performance_period_id', $current)->with('performancePeriod:id,name')->get();
+
+        return [
+            'periodName' => $reviews->first()?->performancePeriod?->name,
+            'submitted' => $reviews->where('status', 'submitted')->count(),
+            'total' => $reviews->count(),
+        ];
+    }
+
+    private function trainingSummary(): array
+    {
+        return [
+            'activeEnrollments' => TrainingEnrollment::whereIn('status', ['enrolled', 'in_progress'])->count(),
+            'completedEnrollments' => TrainingEnrollment::where('status', 'completed')->count(),
+        ];
+    }
+
     private function cashFlowTrend(): array
     {
         $from = now()->subMonths(5)->startOfMonth();
@@ -126,6 +194,23 @@ class DashboardController extends Controller
             ->all();
     }
 
+    private function recentTransactions(): array
+    {
+        return JournalEntry::query()
+            ->withSum('lines as total_debit', 'debit')
+            ->latest('date')
+            ->latest('id')
+            ->limit(5)
+            ->get()
+            ->map(fn (JournalEntry $e) => [
+                'reference' => $e->reference,
+                'description' => $e->description,
+                'date' => $e->date->toDateString(),
+                'total' => (float) $e->total_debit,
+            ])
+            ->all();
+    }
+
     private function topProductsByStock(): array
     {
         return Product::query()
@@ -135,5 +220,47 @@ class DashboardController extends Controller
             ->get()
             ->map(fn (Product $p) => ['name' => $p->name, 'quantity' => (float) ($p->stocks_sum_quantity ?? 0)])
             ->all();
+    }
+
+    private function recentStockMovements(): array
+    {
+        return StockMovement::query()
+            ->with(['product:id,name', 'warehouse:id,name'])
+            ->latest('created_at')
+            ->limit(5)
+            ->get()
+            ->map(fn (StockMovement $m) => [
+                'product' => $m->product->name,
+                'warehouse' => $m->warehouse->name,
+                'type' => $m->type,
+                'quantity' => (float) $m->quantity,
+            ])
+            ->all();
+    }
+
+    private function myOverview(Employee $employee): array
+    {
+        $presentThisMonth = Attendance::where('employee_id', $employee->id)
+            ->whereBetween('date', [now()->startOfMonth(), now()->endOfMonth()])
+            ->whereIn('status', [AttendanceStatus::Present->value, AttendanceStatus::Late->value])
+            ->count();
+
+        $leaveBalance = LeaveBalance::where('employee_id', $employee->id)
+            ->where('year', now()->year)
+            ->get()
+            ->sum(fn (LeaveBalance $b) => $b->remainingDays());
+
+        $latestPayslip = Payslip::where('employee_id', $employee->id)
+            ->latest('created_at')
+            ->first();
+
+        return [
+            'presentThisMonth' => $presentThisMonth,
+            'leaveBalance' => (float) $leaveBalance,
+            'latestPayslip' => $latestPayslip ? [
+                'netSalary' => (float) $latestPayslip->net_salary,
+                'status' => $latestPayslip->status->value,
+            ] : null,
+        ];
     }
 }

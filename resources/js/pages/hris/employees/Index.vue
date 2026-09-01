@@ -11,8 +11,8 @@ import { Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableR
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem, SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { Archive, Plus, Search } from 'lucide-vue-next';
-import { ref, watch } from 'vue';
+import { Archive, Plus, Search, Users } from 'lucide-vue-next';
+import { computed, ref, watch } from 'vue';
 
 interface EmployeeRow {
     id: number;
@@ -51,6 +51,15 @@ const search = ref(props.filters.search ?? '');
 const departmentId = ref(props.filters.department_id ?? '');
 const status = ref(props.filters.status ?? '');
 const archived = ref(props.filters.archived === 'true');
+
+const hasActiveFilters = computed(() => Boolean(search.value || departmentId.value || status.value || archived.value));
+
+function clearFilters() {
+    search.value = '';
+    departmentId.value = '';
+    status.value = '';
+    archived.value = false;
+}
 
 watch([search, departmentId, status, archived], ([searchValue, departmentValue, statusValue, archivedValue]) => {
     router.get(
@@ -140,7 +149,29 @@ function initials(name: string): string {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    <TableEmpty v-if="employees.data.length === 0" :colspan="6">No employees found.</TableEmpty>
+                    <TableEmpty
+                        v-if="employees.data.length === 0 && hasActiveFilters"
+                        :colspan="6"
+                        :icon="Search"
+                        title="No employees match your filters"
+                        description="Try adjusting or clearing your search and filters."
+                    >
+                        <Button variant="outline" size="sm" @click="clearFilters">Clear filters</Button>
+                    </TableEmpty>
+                    <TableEmpty
+                        v-else-if="employees.data.length === 0"
+                        :colspan="6"
+                        :icon="Users"
+                        title="No employees yet"
+                        description="Create your first employee to get started."
+                    >
+                        <Button v-if="can('employee.create')" size="sm" as-child>
+                            <Link :href="route('hris.employees.create')">
+                                <Plus class="size-4" />
+                                Add Employee
+                            </Link>
+                        </Button>
+                    </TableEmpty>
                     <TableRow v-for="employee in employees.data" :key="employee.id" class="cursor-pointer" @click="router.visit(route('hris.employees.show', employee.id))">
                         <TableCell class="font-medium">
                             <div class="flex items-center gap-3">

@@ -18,7 +18,7 @@ class DashboardTest extends TestCase
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        foreach (['employee.view', 'users.view'] as $permission) {
+        foreach (['employee.view', 'users.view', 'product.view', 'purchase.view', 'sales.view', 'recruitment.view', 'performance.view'] as $permission) {
             Permission::findOrCreate($permission);
         }
     }
@@ -71,5 +71,41 @@ class DashboardTest extends TestCase
         $this->actingAs($withAccess)
             ->get('/dashboard')
             ->assertInertia(fn ($page) => $page->has('platform.stats.totalUsers')->has('platform.usersByRole'));
+    }
+
+    public function test_sales_only_users_do_not_see_purchase_order_data_and_vice_versa()
+    {
+        $salesOnly = $this->userWithPermissions(['product.view', 'sales.view']);
+        $purchasingOnly = $this->userWithPermissions(['product.view', 'purchase.view']);
+
+        $this->actingAs($salesOnly)
+            ->get('/dashboard')
+            ->assertInertia(fn ($page) => $page
+                ->where('erp.draftSalesOrders', 0)
+                ->where('erp.draftPurchaseOrders', null));
+
+        $this->actingAs($purchasingOnly)
+            ->get('/dashboard')
+            ->assertInertia(fn ($page) => $page
+                ->where('erp.draftPurchaseOrders', 0)
+                ->where('erp.draftSalesOrders', null));
+    }
+
+    public function test_hris_sub_widgets_are_only_sent_to_users_with_their_specific_permission()
+    {
+        $hrOnly = $this->userWithPermissions(['employee.view']);
+        $hrWithRecruitmentAndPerformance = $this->userWithPermissions(['employee.view', 'recruitment.view', 'performance.view']);
+
+        $this->actingAs($hrOnly)
+            ->get('/dashboard')
+            ->assertInertia(fn ($page) => $page
+                ->where('hris.recruitmentSummary', null)
+                ->where('hris.performanceSummary', null));
+
+        $this->actingAs($hrWithRecruitmentAndPerformance)
+            ->get('/dashboard')
+            ->assertInertia(fn ($page) => $page
+                ->has('hris.recruitmentSummary.openVacancies')
+                ->has('hris.performanceSummary.submitted'));
     }
 }

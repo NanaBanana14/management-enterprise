@@ -2,19 +2,25 @@
 import GroupedBarChart from '@/components/charts/GroupedBarChart.vue';
 import HorizontalBarChart from '@/components/charts/HorizontalBarChart.vue';
 import TrendAreaChart from '@/components/charts/TrendAreaChart.vue';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
 import {
     AlertTriangle,
+    ArrowDownToLine,
+    ArrowLeftRight,
+    ArrowUpFromLine,
     Ban,
     Boxes,
+    CalendarCheck,
     CalendarClock,
     CheckCircle2,
     Clock,
     Clock3,
     FileText,
+    GraduationCap,
     PackageSearch,
     PiggyBank,
     ReceiptText,
@@ -22,6 +28,8 @@ import {
     ShoppingCart,
     UserCheck,
     Users,
+    UserSearch,
+    Wallet,
     XCircle,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -32,21 +40,29 @@ interface HrisStats {
     pendingOvertime: number;
     attendanceTrend: { date: string; present: number; absent: number }[];
     leaveStatusBreakdown: { status: string; count: number }[];
+    recentLeaveRequests: { employee: string; type: string; days: number; status: string }[] | null;
+    recruitmentSummary: { openVacancies: number; activeApplicants: number } | null;
+    performanceSummary: { periodName: string | null; submitted: number; total: number } | null;
+    trainingSummary: { activeEnrollments: number; completedEnrollments: number } | null;
 }
 
 interface FinanceStats {
     cashBankBalance: number;
     receivableOutstanding: number;
     payableOutstanding: number;
+    receivableOverdue: number;
+    payableOverdue: number;
     cashFlowTrend: { month: string; income: number; expense: number }[];
+    recentTransactions: { reference: string; description: string | null; date: string; total: number }[];
 }
 
 interface ErpStats {
     totalProducts: number;
     lowStockProducts: number;
-    draftPurchaseOrders: number;
-    draftSalesOrders: number;
+    draftPurchaseOrders: number | null;
+    draftSalesOrders: number | null;
     topProductsByStock: { name: string; quantity: number }[];
+    recentStockMovements: { product: string; warehouse: string; type: string; quantity: number }[];
 }
 
 interface PlatformStats {
@@ -58,14 +74,21 @@ interface PlatformStats {
     usersByRole: { role: string; count: number }[];
 }
 
+interface MyOverview {
+    presentThisMonth: number;
+    leaveBalance: number;
+    latestPayslip: { netSalary: number; status: string } | null;
+}
+
 const props = defineProps<{
     hris: HrisStats | null;
     finance: FinanceStats | null;
     erp: ErpStats | null;
     platform: PlatformStats | null;
+    me: MyOverview | null;
 }>();
 
-const hasAnySection = computed(() => Boolean(props.hris || props.finance || props.erp || props.platform));
+const hasAnySection = computed(() => Boolean(props.hris || props.finance || props.erp || props.platform || props.me));
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
 
@@ -103,6 +126,13 @@ const leaveStatusMeta: Record<string, { label: string; color: string; icon: type
     cancelled: { label: 'Cancelled', color: '#94a3b8', icon: Ban },
 };
 
+const leaveStatusBadge: Record<string, 'warning' | 'success' | 'destructive' | 'outline'> = {
+    pending: 'warning',
+    approved: 'success',
+    rejected: 'destructive',
+    cancelled: 'outline',
+};
+
 const leaveBreakdown = computed(() => {
     const counts = new Map(props.hris?.leaveStatusBreakdown.map((r) => [r.status, r.count]) ?? []);
     const order = ['pending', 'approved', 'rejected', 'cancelled'];
@@ -115,6 +145,26 @@ const leaveBreakdown = computed(() => {
         percent: total ? ((counts.get(key) ?? 0) / total) * 100 : 0,
     }));
 });
+
+const movementIcon: Record<string, typeof ArrowDownToLine> = {
+    in: ArrowDownToLine,
+    out: ArrowUpFromLine,
+    transfer_in: ArrowLeftRight,
+    transfer_out: ArrowLeftRight,
+};
+
+const movementLabel: Record<string, string> = {
+    in: 'Stock in',
+    out: 'Stock out',
+    transfer_in: 'Transfer in',
+    transfer_out: 'Transfer out',
+};
+
+const payslipStatusBadge: Record<string, 'warning' | 'success' | 'outline'> = {
+    draft: 'warning',
+    approved: 'success',
+    paid: 'outline',
+};
 </script>
 
 <template>
@@ -125,6 +175,49 @@ const leaveBreakdown = computed(() => {
             <div>
                 <h1 class="text-2xl font-semibold tracking-tight">Overview</h1>
                 <p class="text-sm text-muted-foreground">A snapshot across HRIS, Finance, and ERP.</p>
+            </div>
+
+            <div v-if="me" class="space-y-3">
+                <h2 class="text-sm font-medium text-muted-foreground">My Snapshot</h2>
+                <div class="grid gap-4 sm:grid-cols-3">
+                    <Link href="/hris/attendance">
+                        <Card class="transition-colors hover:bg-muted/40">
+                            <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle class="text-sm font-medium text-muted-foreground">Present This Month</CardTitle>
+                                <CalendarCheck class="size-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div class="text-2xl font-semibold">{{ me.presentThisMonth }} days</div>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                    <Link href="/hris/leave">
+                        <Card class="transition-colors hover:bg-muted/40">
+                            <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle class="text-sm font-medium text-muted-foreground">Leave Balance</CardTitle>
+                                <CalendarClock class="size-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div class="text-2xl font-semibold">{{ me.leaveBalance }} days</div>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                    <Link href="/hris/payroll">
+                        <Card class="transition-colors hover:bg-muted/40">
+                            <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle class="text-sm font-medium text-muted-foreground">Latest Payslip</CardTitle>
+                                <Wallet class="size-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent v-if="me.latestPayslip" class="flex items-center justify-between">
+                                <div class="text-2xl font-semibold">{{ formatCurrency(me.latestPayslip.netSalary) }}</div>
+                                <Badge :variant="payslipStatusBadge[me.latestPayslip.status] ?? 'outline'">{{ me.latestPayslip.status }}</Badge>
+                            </CardContent>
+                            <CardContent v-else>
+                                <p class="text-sm text-muted-foreground">No payslip yet.</p>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                </div>
             </div>
 
             <div v-if="hris" class="space-y-3">
@@ -165,6 +258,47 @@ const leaveBreakdown = computed(() => {
                     </Link>
                 </div>
 
+                <div v-if="hris.recruitmentSummary || hris.performanceSummary || hris.trainingSummary" class="grid gap-4 sm:grid-cols-3">
+                    <Link v-if="hris.recruitmentSummary" href="/hris/recruitment/vacancies">
+                        <Card class="transition-colors hover:bg-muted/40">
+                            <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle class="text-sm font-medium text-muted-foreground">Recruitment</CardTitle>
+                                <UserSearch class="size-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div class="text-2xl font-semibold">{{ hris.recruitmentSummary.openVacancies }} open</div>
+                                <p class="text-xs text-muted-foreground">{{ hris.recruitmentSummary.activeApplicants }} applicants in pipeline</p>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                    <Link v-if="hris.performanceSummary" href="/hris/performance/periods">
+                        <Card class="transition-colors hover:bg-muted/40">
+                            <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle class="text-sm font-medium text-muted-foreground">Performance Reviews</CardTitle>
+                                <ShieldCheck class="size-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div class="text-2xl font-semibold">{{ hris.performanceSummary.submitted }} / {{ hris.performanceSummary.total }}</div>
+                                <p class="text-xs text-muted-foreground">
+                                    {{ hris.performanceSummary.periodName ?? 'No active period' }}
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                    <Link v-if="hris.trainingSummary" href="/hris/training">
+                        <Card class="transition-colors hover:bg-muted/40">
+                            <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle class="text-sm font-medium text-muted-foreground">Training</CardTitle>
+                                <GraduationCap class="size-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div class="text-2xl font-semibold">{{ hris.trainingSummary.activeEnrollments }} active</div>
+                                <p class="text-xs text-muted-foreground">{{ hris.trainingSummary.completedEnrollments }} completed</p>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                </div>
+
                 <div class="grid gap-4 lg:grid-cols-3">
                     <Card class="lg:col-span-2">
                         <CardHeader>
@@ -199,6 +333,26 @@ const leaveBreakdown = computed(() => {
                         </CardContent>
                     </Card>
                 </div>
+
+                <Card v-if="hris.recentLeaveRequests">
+                    <CardHeader>
+                        <CardTitle class="text-base">Recent Leave Requests</CardTitle>
+                    </CardHeader>
+                    <CardContent class="space-y-1">
+                        <div
+                            v-for="(item, index) in hris.recentLeaveRequests"
+                            :key="index"
+                            class="flex items-center justify-between border-b py-2 text-sm last:border-b-0"
+                        >
+                            <div>
+                                <div class="font-medium">{{ item.employee }}</div>
+                                <div class="text-xs text-muted-foreground">{{ item.type }} · {{ item.days }} day(s)</div>
+                            </div>
+                            <Badge :variant="leaveStatusBadge[item.status] ?? 'outline'">{{ item.status }}</Badge>
+                        </div>
+                        <p v-if="hris.recentLeaveRequests.length === 0" class="py-2 text-sm text-muted-foreground">No leave requests yet.</p>
+                    </CardContent>
+                </Card>
             </div>
 
             <div v-if="finance" class="space-y-3">
@@ -223,6 +377,9 @@ const leaveBreakdown = computed(() => {
                             </CardHeader>
                             <CardContent>
                                 <div class="text-2xl font-semibold">{{ formatCurrency(finance.receivableOutstanding) }}</div>
+                                <p v-if="finance.receivableOverdue > 0" class="mt-1 text-xs font-medium text-destructive">
+                                    {{ finance.receivableOverdue }} overdue
+                                </p>
                             </CardContent>
                         </Card>
                     </Link>
@@ -234,25 +391,50 @@ const leaveBreakdown = computed(() => {
                             </CardHeader>
                             <CardContent>
                                 <div class="text-2xl font-semibold">{{ formatCurrency(finance.payableOutstanding) }}</div>
+                                <p v-if="finance.payableOverdue > 0" class="mt-1 text-xs font-medium text-destructive">
+                                    {{ finance.payableOverdue }} overdue
+                                </p>
                             </CardContent>
                         </Card>
                     </Link>
                 </div>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle class="text-base">Cash Flow — last 6 months</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <GroupedBarChart
-                            v-if="cashFlowGroups.length > 0"
-                            :data="cashFlowGroups"
-                            :series="cashFlowSeries"
-                            :value-formatter="formatCompactCurrency"
-                        />
-                        <p v-else class="text-sm text-muted-foreground">No journal activity yet.</p>
-                    </CardContent>
-                </Card>
+                <div class="grid gap-4 lg:grid-cols-3">
+                    <Card class="lg:col-span-2">
+                        <CardHeader>
+                            <CardTitle class="text-base">Cash Flow — last 6 months</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <GroupedBarChart
+                                v-if="cashFlowGroups.length > 0"
+                                :data="cashFlowGroups"
+                                :series="cashFlowSeries"
+                                :value-formatter="formatCompactCurrency"
+                            />
+                            <p v-else class="text-sm text-muted-foreground">No journal activity yet.</p>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle class="text-base">Recent Transactions</CardTitle>
+                        </CardHeader>
+                        <CardContent class="space-y-1">
+                            <div
+                                v-for="(tx, index) in finance.recentTransactions"
+                                :key="index"
+                                class="flex items-center justify-between border-b py-2 text-sm last:border-b-0"
+                            >
+                                <div class="truncate pr-2">
+                                    <div class="truncate font-medium">{{ tx.description ?? tx.reference }}</div>
+                                    <div class="text-xs text-muted-foreground">{{ tx.date }}</div>
+                                </div>
+                                <div class="shrink-0 text-right text-xs font-medium">{{ formatCompactCurrency(tx.total) }}</div>
+                            </div>
+                            <p v-if="finance.recentTransactions.length === 0" class="py-2 text-sm text-muted-foreground">No transactions yet.</p>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
 
             <div v-if="erp" class="space-y-3">
@@ -280,7 +462,7 @@ const leaveBreakdown = computed(() => {
                             </CardContent>
                         </Card>
                     </Link>
-                    <Link href="/erp/purchase-orders">
+                    <Link v-if="erp.draftPurchaseOrders !== null" href="/erp/purchase-orders">
                         <Card class="transition-colors hover:bg-muted/40">
                             <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle class="text-sm font-medium text-muted-foreground">Draft POs</CardTitle>
@@ -291,7 +473,7 @@ const leaveBreakdown = computed(() => {
                             </CardContent>
                         </Card>
                     </Link>
-                    <Link href="/erp/sales-orders">
+                    <Link v-if="erp.draftSalesOrders !== null" href="/erp/sales-orders">
                         <Card class="transition-colors hover:bg-muted/40">
                             <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle class="text-sm font-medium text-muted-foreground">Draft SOs</CardTitle>
@@ -304,14 +486,39 @@ const leaveBreakdown = computed(() => {
                     </Link>
                 </div>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle class="text-base">Stock by Product</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <HorizontalBarChart :data="stockBars" color="#059669" />
-                    </CardContent>
-                </Card>
+                <div class="grid gap-4 lg:grid-cols-3">
+                    <Card class="lg:col-span-2">
+                        <CardHeader>
+                            <CardTitle class="text-base">Stock by Product</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <HorizontalBarChart :data="stockBars" color="#059669" />
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle class="text-base">Recent Stock Movements</CardTitle>
+                        </CardHeader>
+                        <CardContent class="space-y-1">
+                            <div
+                                v-for="(m, index) in erp.recentStockMovements"
+                                :key="index"
+                                class="flex items-center justify-between border-b py-2 text-sm last:border-b-0"
+                            >
+                                <div class="flex items-center gap-2 truncate pr-2">
+                                    <component :is="movementIcon[m.type] ?? ArrowLeftRight" class="size-3.5 shrink-0 text-muted-foreground" />
+                                    <div class="truncate">
+                                        <div class="truncate font-medium">{{ m.product }}</div>
+                                        <div class="text-xs text-muted-foreground">{{ movementLabel[m.type] ?? m.type }} · {{ m.warehouse }}</div>
+                                    </div>
+                                </div>
+                                <div class="shrink-0 text-xs font-medium">{{ m.quantity }}</div>
+                            </div>
+                            <p v-if="erp.recentStockMovements.length === 0" class="py-2 text-sm text-muted-foreground">No stock movements yet.</p>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
 
             <div v-if="platform" class="space-y-3">

@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableR
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem, SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { Plus, Search } from 'lucide-vue-next';
+import { BookText, Plus, Search } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 
 interface EntryRow {
@@ -82,7 +82,29 @@ function formatCurrency(value: number): string {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    <TableEmpty v-if="entries.data.length === 0" :colspan="4">No journal entries yet.</TableEmpty>
+                    <TableEmpty
+                        v-if="entries.data.length === 0 && search"
+                        :colspan="4"
+                        :icon="Search"
+                        title="No matching journal entries"
+                        description="Try a different reference or description."
+                    >
+                        <Button variant="outline" size="sm" @click="search = ''">Clear search</Button>
+                    </TableEmpty>
+                    <TableEmpty
+                        v-else-if="entries.data.length === 0"
+                        :colspan="4"
+                        :icon="BookText"
+                        title="No journal entries yet"
+                        description="Create your first journal entry to start the ledger."
+                    >
+                        <Button v-if="canCreate" size="sm" as-child>
+                            <Link :href="route('finance.journal.create')">
+                                <Plus class="size-4" />
+                                New Entry
+                            </Link>
+                        </Button>
+                    </TableEmpty>
                     <TableRow
                         v-for="entry in entries.data"
                         :key="entry.id"
