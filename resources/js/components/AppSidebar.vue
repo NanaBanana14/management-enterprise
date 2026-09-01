@@ -16,6 +16,7 @@ import {
     FileBarChart,
     FileText,
     GraduationCap,
+    Handshake,
     LayoutGrid,
     Landmark,
     Package,
@@ -93,6 +94,10 @@ const financeNavItems = computed<NavItem[]>(() =>
     ).filter(canSee),
 );
 
+const crmNavItems = computed<NavItem[]>(() =>
+    ([{ title: 'Opportunities', href: '/crm/opportunities', icon: Handshake, permission: 'opportunity.view' }] satisfies NavItem[]).filter(canSee),
+);
+
 const erpNavItems = computed<NavItem[]>(() =>
     (
         [
@@ -136,6 +141,7 @@ const administrationNavItems = computed<NavItem[]>(() =>
             <NavMain :items="platformNavItems" label="Platform" />
             <NavMain :items="hrisNavItems" label="HRIS" />
             <NavMain :items="financeNavItems" label="Finance" />
+            <NavMain :items="crmNavItems" label="CRM" />
             <NavMain :items="erpNavItems" label="ERP" />
             <NavMain :items="administrationNavItems" label="Administration" />
         </SidebarContent>

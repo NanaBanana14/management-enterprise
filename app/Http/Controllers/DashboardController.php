@@ -14,6 +14,7 @@ use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
 use App\Models\LeaveBalance;
 use App\Models\LeaveRequest;
+use App\Models\Opportunity;
 use App\Models\OvertimeRequest;
 use App\Models\Payable;
 use App\Models\Payslip;
@@ -59,6 +60,16 @@ class DashboardController extends Controller
             'recentTransactions' => $this->recentTransactions(),
         ] : null;
 
+        $crm = $user->can('opportunity.view') ? [
+            'openOpportunities' => Opportunity::whereNotIn('stage', ['won', 'lost'])->count(),
+            'openPipelineValue' => (float) Opportunity::whereNotIn('stage', ['won', 'lost'])
+                ->with('lines')
+                ->get()
+                ->sum(fn (Opportunity $o) => $o->lines->sum(fn ($l) => $l->quantity * $l->unit_price)),
+            'stageBreakdown' => $this->opportunityStageBreakdown(),
+            'recentOpportunities' => $this->recentOpportunities(),
+        ] : null;
+
         $erp = $user->can('product.view') ? [
             'totalProducts' => Product::count(),
             'lowStockProducts' => Product::query()->withSum('stocks', 'quantity')->get()->filter(fn (Product $p) => (float) ($p->stocks_sum_quantity ?? 0) < 10)->count(),
@@ -86,6 +97,7 @@ class DashboardController extends Controller
         return Inertia::render('Dashboard', [
             'hris' => $hris,
             'finance' => $finance,
+            'crm' => $crm,
             'erp' => $erp,
             'platform' => $platform,
             'me' => $me,
@@ -207,6 +219,31 @@ class DashboardController extends Controller
                 'description' => $e->description,
                 'date' => $e->date->toDateString(),
                 'total' => (float) $e->total_debit,
+            ])
+            ->all();
+    }
+
+    private function opportunityStageBreakdown(): array
+    {
+        return Opportunity::query()
+            ->selectRaw('stage, count(*) as count')
+            ->groupBy('stage')
+            ->get()
+            ->map(fn ($row) => ['stage' => $row->stage->value, 'count' => (int) $row->count])
+            ->all();
+    }
+
+    private function recentOpportunities(): array
+    {
+        return Opportunity::query()
+            ->with('customer:id,name')
+            ->latest('created_at')
+            ->limit(5)
+            ->get()
+            ->map(fn (Opportunity $o) => [
+                'title' => $o->title,
+                'customer' => $o->customer->name,
+                'stage' => $o->stage->value,
             ])
             ->all();
     }

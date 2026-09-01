@@ -21,6 +21,7 @@ import {
     Clock3,
     FileText,
     GraduationCap,
+    Handshake,
     PackageSearch,
     PiggyBank,
     ReceiptText,
@@ -56,6 +57,13 @@ interface FinanceStats {
     recentTransactions: { reference: string; description: string | null; date: string; total: number }[];
 }
 
+interface CrmStats {
+    openOpportunities: number;
+    openPipelineValue: number;
+    stageBreakdown: { stage: string; count: number }[];
+    recentOpportunities: { title: string; customer: string; stage: string }[];
+}
+
 interface ErpStats {
     totalProducts: number;
     lowStockProducts: number;
@@ -83,12 +91,13 @@ interface MyOverview {
 const props = defineProps<{
     hris: HrisStats | null;
     finance: FinanceStats | null;
+    crm: CrmStats | null;
     erp: ErpStats | null;
     platform: PlatformStats | null;
     me: MyOverview | null;
 }>();
 
-const hasAnySection = computed(() => Boolean(props.hris || props.finance || props.erp || props.platform || props.me));
+const hasAnySection = computed(() => Boolean(props.hris || props.finance || props.crm || props.erp || props.platform || props.me));
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
 
@@ -141,6 +150,37 @@ const leaveBreakdown = computed(() => {
     return order.map((key) => ({
         key,
         ...leaveStatusMeta[key],
+        count: counts.get(key) ?? 0,
+        percent: total ? ((counts.get(key) ?? 0) / total) * 100 : 0,
+    }));
+});
+
+const stageMeta: Record<string, { label: string; color: string }> = {
+    prospecting: { label: 'Prospecting', color: '#94a3b8' },
+    qualified: { label: 'Qualified', color: '#64748b' },
+    proposal: { label: 'Proposal', color: '#f59e0b' },
+    negotiation: { label: 'Negotiation', color: '#f59e0b' },
+    won: { label: 'Won', color: '#10b981' },
+    lost: { label: 'Lost', color: '#ef4444' },
+};
+
+const opportunityStageBadge: Record<string, 'outline' | 'secondary' | 'warning' | 'success' | 'destructive'> = {
+    prospecting: 'outline',
+    qualified: 'secondary',
+    proposal: 'warning',
+    negotiation: 'warning',
+    won: 'success',
+    lost: 'destructive',
+};
+
+const stageBreakdown = computed(() => {
+    const counts = new Map(props.crm?.stageBreakdown.map((r) => [r.stage, r.count]) ?? []);
+    const order = ['prospecting', 'qualified', 'proposal', 'negotiation', 'won', 'lost'];
+    const total = order.reduce((sum, key) => sum + (counts.get(key) ?? 0), 0);
+
+    return order.map((key) => ({
+        key,
+        ...stageMeta[key],
         count: counts.get(key) ?? 0,
         percent: total ? ((counts.get(key) ?? 0) / total) * 100 : 0,
     }));
@@ -432,6 +472,76 @@ const payslipStatusBadge: Record<string, 'warning' | 'success' | 'outline'> = {
                                 <div class="shrink-0 text-right text-xs font-medium">{{ formatCompactCurrency(tx.total) }}</div>
                             </div>
                             <p v-if="finance.recentTransactions.length === 0" class="py-2 text-sm text-muted-foreground">No transactions yet.</p>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+
+            <div v-if="crm" class="space-y-3">
+                <h2 class="text-sm font-medium text-muted-foreground">CRM</h2>
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <Link href="/crm/opportunities">
+                        <Card class="transition-colors hover:bg-muted/40">
+                            <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle class="text-sm font-medium text-muted-foreground">Open Opportunities</CardTitle>
+                                <Handshake class="size-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div class="text-2xl font-semibold">{{ crm.openOpportunities }}</div>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                    <Link href="/crm/opportunities">
+                        <Card class="transition-colors hover:bg-muted/40">
+                            <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle class="text-sm font-medium text-muted-foreground">Open Pipeline Value</CardTitle>
+                                <ReceiptText class="size-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div class="text-2xl font-semibold">{{ formatCurrency(crm.openPipelineValue) }}</div>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                </div>
+
+                <div class="grid gap-4 lg:grid-cols-3">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle class="text-base">Pipeline by Stage</CardTitle>
+                        </CardHeader>
+                        <CardContent class="space-y-3">
+                            <div v-for="item in stageBreakdown" :key="item.key" class="space-y-1">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="font-medium text-foreground">{{ item.label }}</span>
+                                    <span class="text-muted-foreground">{{ item.count }}</span>
+                                </div>
+                                <div class="h-2 overflow-hidden rounded-full bg-muted">
+                                    <div
+                                        class="h-full rounded-full transition-all duration-500"
+                                        :style="{ width: `${item.percent}%`, backgroundColor: item.color }"
+                                    />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card class="lg:col-span-2">
+                        <CardHeader>
+                            <CardTitle class="text-base">Recent Opportunities</CardTitle>
+                        </CardHeader>
+                        <CardContent class="space-y-1">
+                            <div
+                                v-for="(item, index) in crm.recentOpportunities"
+                                :key="index"
+                                class="flex items-center justify-between border-b py-2 text-sm last:border-b-0"
+                            >
+                                <div class="truncate pr-2">
+                                    <div class="truncate font-medium">{{ item.title }}</div>
+                                    <div class="text-xs text-muted-foreground">{{ item.customer }}</div>
+                                </div>
+                                <Badge :variant="opportunityStageBadge[item.stage] ?? 'outline'">{{ item.stage }}</Badge>
+                            </div>
+                            <p v-if="crm.recentOpportunities.length === 0" class="py-2 text-sm text-muted-foreground">No opportunities yet.</p>
                         </CardContent>
                     </Card>
                 </div>
