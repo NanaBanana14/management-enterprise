@@ -11,7 +11,7 @@ import { SearchableSelect } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem, SharedData } from '@/types';
-import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { LoaderCircle, Plus } from 'lucide-vue-next';
 import { ref } from 'vue';
 
@@ -20,6 +20,7 @@ interface ProgramRow {
     name: string;
     provider: string | null;
     duration_hours: number | null;
+    department: string | null;
     enrollments_count: number;
     my_enrollment: { id: number; status: string } | null;
 }
@@ -33,6 +34,7 @@ interface CategoryRow {
 const props = defineProps<{
     categories: CategoryRow[];
     hasEmployeeProfile: boolean;
+    departments: { id: number; name: string }[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -68,6 +70,8 @@ function submitCategory() {
 const showProgramDialog = ref(false);
 const programForm = useForm({
     training_category_id: '' as number | '',
+    department_id: '' as number | '',
+    audience: 'staff',
     name: '',
     provider: '',
     duration_hours: '',
@@ -83,6 +87,7 @@ function submitProgram() {
 }
 
 const categoryOptions = props.categories.map((c) => ({ value: c.id, label: c.name }));
+const departmentOptions = props.departments.map((d) => ({ value: d.id, label: d.name }));
 </script>
 
 <template>
@@ -112,14 +117,15 @@ const categoryOptions = props.categories.map((c) => ({ value: c.id, label: c.nam
                     </CardHeader>
                     <CardContent class="space-y-2">
                         <div v-for="program in category.programs" :key="program.id" class="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
-                            <div>
-                                <div class="font-medium">{{ program.name }}</div>
+                            <Link :href="route('hris.training.programs.show', program.id)" class="min-w-0 flex-1">
+                                <div class="truncate font-medium hover:underline">{{ program.name }}</div>
                                 <div class="text-xs text-muted-foreground">
                                     {{ program.provider ?? 'Internal' }}
                                     <span v-if="program.duration_hours"> · {{ program.duration_hours }}h</span>
                                     · {{ program.enrollments_count }} enrolled
+                                    · {{ program.department ?? 'General' }}
                                 </div>
-                            </div>
+                            </Link>
                             <Badge v-if="program.my_enrollment" :variant="statusVariant[program.my_enrollment.status] ?? 'outline'">
                                 {{ program.my_enrollment.status }}
                             </Badge>
@@ -178,6 +184,34 @@ const categoryOptions = props.categories.map((c) => ({ value: c.id, label: c.nam
                         <div class="grid gap-2">
                             <Label for="duration_hours">Duration (hours)</Label>
                             <Input id="duration_hours" v-model="programForm.duration_hours" type="number" min="1" />
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="grid gap-2">
+                            <Label>Division</Label>
+                            <SearchableSelect v-model="programForm.department_id" placeholder="General (all divisions)" :options="departmentOptions" />
+                            <InputError :message="programForm.errors.department_id" />
+                        </div>
+                        <div class="grid gap-2">
+                            <Label>Audience</Label>
+                            <div class="flex gap-2">
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    :variant="programForm.audience === 'staff' ? 'default' : 'outline'"
+                                    @click="programForm.audience = 'staff'"
+                                >
+                                    Staff
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    :variant="programForm.audience === 'recruitment' ? 'default' : 'outline'"
+                                    @click="programForm.audience = 'recruitment'"
+                                >
+                                    Recruitment Screening
+                                </Button>
+                            </div>
                         </div>
                     </div>
                     <div class="grid gap-2">

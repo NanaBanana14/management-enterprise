@@ -16,6 +16,7 @@ import {
     FileBarChart,
     FileText,
     GraduationCap,
+    Handshake,
     LayoutGrid,
     Landmark,
     Package,
@@ -31,6 +32,7 @@ import {
     Users,
     Wallet,
     Warehouse,
+    Wrench,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
@@ -93,6 +95,10 @@ const financeNavItems = computed<NavItem[]>(() =>
     ).filter(canSee),
 );
 
+const crmNavItems = computed<NavItem[]>(() =>
+    ([{ title: 'Opportunities', href: '/crm/opportunities', icon: Handshake, permission: 'opportunity.view' }] satisfies NavItem[]).filter(canSee),
+);
+
 const erpNavItems = computed<NavItem[]>(() =>
     (
         [
@@ -105,6 +111,10 @@ const erpNavItems = computed<NavItem[]>(() =>
             { title: 'Sales Orders', href: '/erp/sales-orders', icon: ReceiptText, permission: 'sales.view' },
         ] satisfies NavItem[]
     ).filter(canSee),
+);
+
+const assetsNavItems = computed<NavItem[]>(() =>
+    ([{ title: 'Fixed Assets', href: '/assets', icon: Wrench, permission: 'asset.view' }] satisfies NavItem[]).filter(canSee),
 );
 
 const administrationNavItems = computed<NavItem[]>(() =>
@@ -133,11 +143,13 @@ const administrationNavItems = computed<NavItem[]>(() =>
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="platformNavItems" label="Platform" />
-            <NavMain :items="hrisNavItems" label="HRIS" />
-            <NavMain :items="financeNavItems" label="Finance" />
-            <NavMain :items="erpNavItems" label="ERP" />
-            <NavMain :items="administrationNavItems" label="Administration" />
+            <NavMain :items="platformNavItems" label="Platform" :icon="LayoutGrid" />
+            <NavMain :items="hrisNavItems" label="HRIS" :icon="Users" />
+            <NavMain :items="financeNavItems" label="Finance" :icon="Landmark" />
+            <NavMain :items="crmNavItems" label="CRM" :icon="Handshake" />
+            <NavMain :items="erpNavItems" label="ERP" :icon="Boxes" />
+            <NavMain :items="assetsNavItems" label="Assets" :icon="Wrench" />
+            <NavMain :items="administrationNavItems" label="Administration" :icon="ShieldCheck" />
         </SidebarContent>
 
         <SidebarFooter>

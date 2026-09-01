@@ -2,7 +2,7 @@
 
 [← Back to README](../README.md)
 
-MENTER is a **server-rendered Inertia.js application**, so there is no separate REST/JSON API. Every route below returns either an Inertia page response (HTML + a JSON page-props payload on navigation) or a redirect back to one. `routes/web.php` is the entry point; it `require`s five domain route files: `settings.php`, `auth.php`, `hris.php`, `finance.php`, `erp.php`.
+MENTER is a **server-rendered Inertia.js application**, so there is no separate REST/JSON API. Every route below returns either an Inertia page response (HTML + a JSON page-props payload on navigation) or a redirect back to one. `routes/web.php` is the entry point; it `require`s seven domain route files, in this order: `settings.php`, `auth.php`, `hris.php`, `finance.php`, `crm.php`, `erp.php`, `assets.php`.
 
 All routes below run behind the `web` middleware group plus `auth` + `verified` (except the routes under `auth.php`, which are the login/registration flow itself). Every route additionally listed with a `permission:` requirement is enforced by `Spatie\Permission\Middleware\PermissionMiddleware`, which throws a 403 rather than silently hiding anything if the current user lacks it.
 
@@ -14,7 +14,9 @@ All routes below run behind the `web` middleware group plus `auth` + `verified` 
 - [Admin](#admin)
 - [HRIS](#hris)
 - [Finance](#finance)
+- [CRM](#crm)
 - [ERP](#erp)
+- [Assets](#assets)
 
 ---
 
@@ -99,8 +101,14 @@ All routes below run behind the `web` middleware group plus `auth` + `verified` 
 | GET | `/hris/recruitment/applicants/{applicant}` | `hris.recruitment.applicants.show` | `recruitment.view` |
 | POST | `/hris/recruitment/applicants/{applicant}/stage` | `hris.recruitment.applicants.stage` | `recruitment.view` |
 | POST | `/hris/recruitment/applicants/{applicant}/notes` | `hris.recruitment.applicants.notes.store` | `recruitment.view` |
+| POST | `/hris/recruitment/applicants/{applicant}/training` | `hris.recruitment.applicants.training.store` | `recruitment.view` (controller checks `recruitment.manage`); assigns a `recruitment`-audience screening program to the applicant |
+| POST | `/hris/recruitment/applicants/{applicant}/training/{result}` | `hris.recruitment.applicants.training.update` | `recruitment.view` (controller checks `recruitment.manage`); records pass/fail, which gates `moveStage(..., Hired)` |
 | GET | `/hris/training` | `hris.training.index` | `training.view` |
 | POST | `/hris/training/categories`, `/hris/training/programs` | `hris.training.categories.store`, `.programs.store` | `training.view` (controller checks `training.manage`) |
+| GET | `/hris/training/programs/{program}` | `hris.training.programs.show` | `training.view`; the course-player page (materials list + content viewer) |
+| POST | `/hris/training/programs/{program}/materials` | `hris.training.programs.materials.store` | `training.view` (controller checks `training.manage`) |
+| PUT | `/hris/training/programs/{program}/materials/{material}` | `hris.training.programs.materials.update` | `training.view` (controller checks `training.manage`) |
+| DELETE | `/hris/training/programs/{program}/materials/{material}` | `hris.training.programs.materials.destroy` | `training.view` (controller checks `training.manage`) |
 | POST | `/hris/training/programs/{program}/enroll` | `hris.training.programs.enroll` | `training.view` (self-service) |
 | POST | `/hris/training/programs/{program}/enrollments/{enrollment}` | `hris.training.programs.enrollments.update` | `training.view` (controller checks `training.manage`) |
 
@@ -129,6 +137,19 @@ All routes below run behind the `web` middleware group plus `auth` + `verified` 
 | POST | `/finance/payables/{payable}/mark-paid` | `finance.payables.markPaid` | `payable.manage` |
 | GET | `/finance/reports` | `finance.reports.index` | `report.view` |
 
+## CRM
+
+`prefix: /crm`
+
+| Method | URI | Name | Permission |
+|---|---|---|---|
+| GET | `/crm/opportunities` | `crm.opportunities.index` | `opportunity.view` |
+| POST | `/crm/opportunities` | `crm.opportunities.store` | `opportunity.manage` |
+| GET | `/crm/opportunities/{opportunity}` | `crm.opportunities.show` | `opportunity.view` |
+| POST | `/crm/opportunities/{opportunity}/stage` | `crm.opportunities.stage` | `opportunity.manage` |
+| POST | `/crm/opportunities/{opportunity}/win` | `crm.opportunities.win` | `opportunity.manage`; converts the opportunity's lines into a Sales Order |
+| POST | `/crm/opportunities/{opportunity}/notes` | `crm.opportunities.notes.store` | `opportunity.manage` |
+
 ## ERP
 
 `prefix: /erp`
@@ -156,3 +177,16 @@ All routes below run behind the `web` middleware group plus `auth` + `verified` 
 | GET | `/erp/sales-orders` | `erp.sales-orders.index` | `sales.view` |
 | POST | `/erp/sales-orders` | `erp.sales-orders.store` | `sales.create` |
 | POST | `/erp/sales-orders/{salesOrder}/fulfill` | `erp.sales-orders.fulfill` | `sales.approve` |
+
+## Assets
+
+`prefix: /assets`
+
+| Method | URI | Name | Permission |
+|---|---|---|---|
+| GET | `/assets` | `assets.index` | `asset.view` |
+| GET | `/assets/{asset}` | `assets.show` | `asset.view` |
+| POST | `/assets` | `assets.store` | `asset.create`; registers a new fixed asset |
+| POST | `/assets/{asset}/reassign` | `assets.reassign` | `asset.create`; moves custody between a warehouse and an employee |
+| POST | `/assets/depreciation-runs` | `assets.depreciation.run` | `asset.manage`; posts one combined depreciation journal entry for a given month |
+| POST | `/assets/{asset}/dispose` | `assets.dispose` | `asset.manage`; posts a gain/loss journal entry and retires the asset |

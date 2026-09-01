@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableR
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { LoaderCircle, Plus } from 'lucide-vue-next';
+import { CalendarRange, LoaderCircle, Plus } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 interface PeriodRow {
@@ -69,7 +69,18 @@ const submit = () => form.post(route('hris.payroll.periods.store'), { onSuccess:
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    <TableEmpty v-if="periods.length === 0" :colspan="5">No payroll periods yet.</TableEmpty>
+                    <TableEmpty
+                        v-if="periods.length === 0"
+                        :colspan="5"
+                        :icon="CalendarRange"
+                        title="No payroll periods yet"
+                        description="Create your first payroll period to start generating payslips."
+                    >
+                        <Button size="sm" @click="showCreateDialog = true">
+                            <Plus class="size-4" />
+                            Create Payroll Period
+                        </Button>
+                    </TableEmpty>
                     <TableRow
                         v-for="period in periods"
                         :key="period.id"

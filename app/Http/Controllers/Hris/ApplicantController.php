@@ -3,8 +3,12 @@
 namespace App\Http\Controllers\Hris;
 
 use App\Enums\ApplicantStage;
+use App\Enums\ScreeningResult;
+use App\Enums\TrainingAudience;
 use App\Http\Controllers\Controller;
 use App\Models\Applicant;
+use App\Models\ApplicantTrainingResult;
+use App\Models\TrainingProgram;
 use App\Models\Vacancy;
 use App\Services\RecruitmentService;
 use Illuminate\Http\RedirectResponse;
@@ -38,7 +42,12 @@ class ApplicantController extends Controller
 
     public function show(Applicant $applicant): Response
     {
-        $applicant->load(['vacancy:id,title', 'notes.author:id,name']);
+        $applicant->load(['vacancy:id,title,department_id', 'notes.author:id,name', 'trainingResults.program:id,name', 'trainingResults.assessor:id,name']);
+
+        $eligiblePrograms = TrainingProgram::query()
+            ->where('audience', TrainingAudience::Recruitment->value)
+            ->visibleTo($applicant->vacancy->department_id)
+            ->get(['id', 'name']);
 
         return Inertia::render('hris/recruitment/Show', [
             'applicant' => [
@@ -55,8 +64,15 @@ class ApplicantController extends Controller
                     'author' => $note->author->name,
                     'created_at' => $note->created_at->format('Y-m-d H:i'),
                 ]),
+                'training_results' => $applicant->trainingResults->map(fn (ApplicantTrainingResult $r) => [
+                    'id' => $r->id,
+                    'program' => $r->program->name,
+                    'result' => $r->result->value,
+                    'assessor' => $r->assessor?->name,
+                ]),
             ],
             'stages' => array_map(fn (ApplicantStage $s) => ['value' => $s->value, 'label' => $s->label()], ApplicantStage::cases()),
+            'eligiblePrograms' => $eligiblePrograms,
         ]);
     }
 
@@ -80,5 +96,31 @@ class ApplicantController extends Controller
         $this->recruitment->addNote($applicant, $request->user(), $data['note']);
 
         return back()->with('success', 'Note added.');
+    }
+
+    public function assignTraining(Request $request, Applicant $applicant): RedirectResponse
+    {
+        abort_unless($request->user()->can('recruitment.manage'), 403);
+
+        $data = $request->validate(['training_program_id' => ['required', 'exists:training_programs,id']]);
+
+        $this->recruitment->assignScreening($applicant, TrainingProgram::findOrFail($data['training_program_id']));
+
+        return back()->with('success', 'Screening training assigned.');
+    }
+
+    public function updateTrainingResult(Request $request, Applicant $applicant, ApplicantTrainingResult $result): RedirectResponse
+    {
+        abort_unless($request->user()->can('recruitment.manage'), 403);
+        abort_unless($result->applicant_id === $applicant->id, 404);
+
+        $data = $request->validate([
+            'result' => ['required', new Enum(ScreeningResult::class)],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $this->recruitment->recordScreeningResult($result, ScreeningResult::from($data['result']), $data['notes'] ?? null, $request->user());
+
+        return back()->with('success', 'Screening result recorded.');
     }
 }
