@@ -32,4 +32,9 @@ class Applicant extends Model
     {
         return $this->hasMany(ApplicantNote::class);
     }
+
+    public function trainingResults(): HasMany
+    {
+        return $this->hasMany(ApplicantTrainingResult::class);
+    }
 }

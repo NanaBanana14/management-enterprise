@@ -33,7 +33,6 @@ class DatabaseSeeder extends Seeder
         $this->call(LeaveTypeSeeder::class);
         $this->call(KpiSeeder::class);
         $this->call(RecruitmentSeeder::class);
-        $this->call(TrainingSeeder::class);
 
         foreach (self::DEMO_USERS as $demo) {
             $user = User::factory()
@@ -58,6 +57,7 @@ class DatabaseSeeder extends Seeder
             }
         }
 
+        $this->call(TrainingSeeder::class);
         $this->call(LeaveRequestSeeder::class);
         $this->call(ChartOfAccountsSeeder::class);
         $this->call(PayrollSeeder::class);

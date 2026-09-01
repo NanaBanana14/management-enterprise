@@ -98,12 +98,18 @@ Route::prefix('hris')->name('hris.')->middleware(['auth', 'verified'])->group(fu
         Route::get('recruitment/applicants/{applicant}', [ApplicantController::class, 'show'])->name('recruitment.applicants.show');
         Route::post('recruitment/applicants/{applicant}/stage', [ApplicantController::class, 'moveStage'])->name('recruitment.applicants.stage');
         Route::post('recruitment/applicants/{applicant}/notes', [ApplicantController::class, 'storeNote'])->name('recruitment.applicants.notes.store');
+        Route::post('recruitment/applicants/{applicant}/training', [ApplicantController::class, 'assignTraining'])->name('recruitment.applicants.training.store');
+        Route::post('recruitment/applicants/{applicant}/training/{result}', [ApplicantController::class, 'updateTrainingResult'])->name('recruitment.applicants.training.update');
     });
 
     Route::middleware('permission:training.view')->group(function () {
         Route::get('training', [TrainingController::class, 'index'])->name('training.index');
         Route::post('training/categories', [TrainingController::class, 'storeCategory'])->name('training.categories.store');
         Route::post('training/programs', [TrainingController::class, 'storeProgram'])->name('training.programs.store');
+        Route::get('training/programs/{program}', [TrainingController::class, 'show'])->name('training.programs.show');
+        Route::post('training/programs/{program}/materials', [TrainingController::class, 'storeMaterial'])->name('training.programs.materials.store');
+        Route::put('training/programs/{program}/materials/{material}', [TrainingController::class, 'updateMaterial'])->name('training.programs.materials.update');
+        Route::delete('training/programs/{program}/materials/{material}', [TrainingController::class, 'destroyMaterial'])->name('training.programs.materials.destroy');
         Route::post('training/programs/{program}/enroll', [TrainingEnrollmentController::class, 'store'])->name('training.programs.enroll');
         Route::post('training/programs/{program}/enrollments/{enrollment}', [TrainingEnrollmentController::class, 'updateStatus'])->name('training.programs.enrollments.update');
     });

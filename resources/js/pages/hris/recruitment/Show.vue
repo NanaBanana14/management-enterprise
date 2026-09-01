@@ -5,15 +5,23 @@ import { Card, CardContent } from '@/components/ui/card';
 import { SearchableSelect } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
-import type { BreadcrumbItem } from '@/types';
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import type { BreadcrumbItem, SharedData } from '@/types';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { LoaderCircle, UserPlus } from 'lucide-vue-next';
+import { computed } from 'vue';
 
 interface NoteRow {
     id: number;
     note: string;
     author: string;
     created_at: string;
+}
+
+interface TrainingResultRow {
+    id: number;
+    program: string;
+    result: string;
+    assessor: string | null;
 }
 
 const props = defineProps<{
@@ -26,8 +34,10 @@ const props = defineProps<{
         applied_at: string;
         vacancy: { id: number; title: string };
         notes: NoteRow[];
+        training_results: TrainingResultRow[];
     };
     stages: { value: string; label: string }[];
+    eligiblePrograms: { id: number; name: string }[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -36,6 +46,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: props.applicant.vacancy.title, href: `/hris/recruitment/vacancies/${props.applicant.vacancy.id}` },
     { title: props.applicant.name, href: `/hris/recruitment/applicants/${props.applicant.id}` },
 ];
+
+const page = usePage<SharedData>();
+const canManage = page.props.auth.permissions.includes('recruitment.manage');
 
 const isTerminal = props.applicant.stage === 'hired' || props.applicant.stage === 'rejected';
 
@@ -53,6 +66,12 @@ const stageVariant: Record<string, 'outline' | 'warning' | 'success' | 'destruct
     rejected: 'destructive',
 };
 
+const resultVariant: Record<string, 'outline' | 'warning' | 'success' | 'destructive'> = {
+    pending: 'warning',
+    passed: 'success',
+    failed: 'destructive',
+};
+
 const stageOptions = props.stages.map((s) => ({ value: s.value, label: s.label }));
 
 const noteForm = useForm({ note: '' });
@@ -60,6 +79,20 @@ function submitNote() {
     noteForm.post(route('hris.recruitment.applicants.notes.store', props.applicant.id), {
         onSuccess: () => noteForm.reset(),
     });
+}
+
+const assignedProgramIds = computed(() => props.applicant.training_results.map((r) => r.program));
+const availablePrograms = computed(() => props.eligiblePrograms.filter((p) => !assignedProgramIds.value.includes(p.name)));
+
+const assignForm = useForm({ training_program_id: '' as number | '' });
+function assignTraining() {
+    assignForm.post(route('hris.recruitment.applicants.training.store', props.applicant.id), {
+        onSuccess: () => assignForm.reset(),
+    });
+}
+
+function recordResult(resultId: number, result: 'passed' | 'failed') {
+    router.post(route('hris.recruitment.applicants.training.update', [props.applicant.id, resultId]), { result });
 }
 </script>
 
@@ -86,6 +119,39 @@ function submitNote() {
                     </Button>
                 </div>
             </div>
+
+            <Card v-if="canManage && (applicant.training_results.length > 0 || availablePrograms.length > 0)">
+                <CardContent class="space-y-4 pt-6">
+                    <h2 class="text-sm font-medium">Screening Training</h2>
+
+                    <div v-for="result in applicant.training_results" :key="result.id" class="flex items-center justify-between rounded-md border p-3 text-sm">
+                        <div>
+                            <div class="font-medium">{{ result.program }}</div>
+                            <div v-if="result.assessor" class="text-xs text-muted-foreground">Assessed by {{ result.assessor }}</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <Badge :variant="resultVariant[result.result] ?? 'outline'">{{ result.result }}</Badge>
+                            <template v-if="result.result === 'pending' && !isTerminal">
+                                <Button size="sm" variant="outline" @click="recordResult(result.id, 'passed')">Pass</Button>
+                                <Button size="sm" variant="destructive" @click="recordResult(result.id, 'failed')">Fail</Button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <form v-if="availablePrograms.length > 0 && !isTerminal" class="flex gap-2" @submit.prevent="assignTraining">
+                        <SearchableSelect
+                            v-model="assignForm.training_program_id"
+                            class="flex-1"
+                            placeholder="Assign a screening program"
+                            :options="availablePrograms.map((p) => ({ value: p.id, label: p.name }))"
+                        />
+                        <Button type="submit" :disabled="assignForm.processing || !assignForm.training_program_id">
+                            <LoaderCircle v-if="assignForm.processing" class="size-4 animate-spin" />
+                            Assign
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
 
             <Card>
                 <CardContent class="space-y-4 pt-6">
